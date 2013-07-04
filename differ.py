@@ -16,7 +16,7 @@ class Differ(object):
 	def compile(self):
 		"""Compile at the current revision."""
 		out = subprocess.check_output(["puppet",
-			"apply" "manifests/site.pp", "--noop",
+			"apply", "manifests/site.pp", "--noop",
 			"--facts_terminus=facter", "--confdir=.",
 			"--templatedir=./templates"], cwd=self.repopath)
 		print("compile output")
