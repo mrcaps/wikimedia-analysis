@@ -27,7 +27,6 @@ class Patcher(object):
 			contents = fp.read()
 			replaced = contents.replace(orig, replace)
 		if replaced:
-			print "REPLACING!", replaced
 			with open(fpath, "w") as fp:
 				fp.write(replaced)
 
@@ -89,6 +88,7 @@ class Differ(object):
 
 	def compile(self):
 		"""Compile at the current revision."""
+		log.info("Compiling...")
 		out = subprocess.check_output(["puppet",
 			"apply", "manifests/site.pp", "--noop",
 			"--facts_terminus=facter", "--confdir=.",
