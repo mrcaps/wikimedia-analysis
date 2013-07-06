@@ -1,0 +1,27 @@
+manifests/mysql.pp
+-                               notify => Service[nagios-nrpe-server];
++               #               notify => Service[nagios-nrpe-server];
+
+#commit that changes some stuff:
+#https://github.com/wikimedia/operations-puppet/commit/787f36b8be1d6082083db8b6f878257bb198b2dd#manifests/realm.pp
+manifests/realm.pp
+-$site = $main_ipaddress ? {
+-       /^208\.80\.15[23]\./    => "pmtpa",
+-       /^208\.80\.15[45]\./    => "eqiad",
+-       /^10\.[0-4]\./                  => "pmtpa",
+-       /^10\.6[48]\./                          => "eqiad",
+-       /^91\.198\.174\./               => "esams",
+-       default                                 => "(undefined)"
+-}
++#$site = $main_ipaddress ? {
++#      /^208\.80\.15[23]\./    => "pmtpa",
++#      /^208\.80\.15[45]\./    => "eqiad",
++#      /^10\.[0-4]\./                  => "pmtpa",
++#      /^10\.6[48]\./                          => "eqiad",
++#      /^91\.198\.174\./               => "esams",
++#      default                                 => "(undefined)"
++#}
+
+templates/base/puppet.cron.erb
+-scope.function_versioncmp(lsbdistrelease, "12.04")
++1
