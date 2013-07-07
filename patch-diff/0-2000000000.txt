@@ -1,5 +1,7 @@
 manifests/mysql.pp
+-				content => template("icinga/nrpe_percona.cfg.erb"),
 -				notify => Service[nagios-nrpe-server];
++				content => template("icinga/nrpe_percona.cfg.erb");
 +				#notify => Service[nagios-nrpe-server];
 
 #commit that changes some stuff:

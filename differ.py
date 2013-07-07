@@ -30,13 +30,17 @@ class Patcher(object):
 			with open(fpath, "w") as fp:
 				fp.write(replaced)
 
-	def diff_patch(self):
+	def diff_patch(self, timestamp):
 		"""Patch from 'our' diff format
-
 		see patch-diff for examples.
+
+		Args:
+			timestamp: when to do the diff
 		"""
 		for fname in os.listdir(self.diffpath):
-			self.__apply_diff(os.path.join(self.diffpath, fname))
+			(tstart, tend) = map(int, os.path.splitext(fname)[0].split("-"))
+			if tstart < timestamp and timestamp < tend:
+				self.__apply_diff(os.path.join(self.diffpath, fname))
 
 	def __apply_diff(self, fpath):
 		cur = {
@@ -75,46 +79,78 @@ class Patcher(object):
 
 			run_apply()
 
+REV_HEAD = "."
+
 class Differ(object):
 	def __init__(self, repopath="operations-puppet"):
 		self.repopath = repopath
 		self.patcher = Patcher(repopath)
 
 	def checkout(self, revision):
-		"""Check out at the given revision."""
-		out = subprocess.check_output(
-			["git", "checkout", revision], cwd=self.repopath)
+		"""Check out at the given revision.
+
+		Args:
+			revision: the revision to check out, or "." for head
+		"""
+		try:
+			out = subprocess.check_output(
+				["git", "checkout", revision], cwd=self.repopath)
+		except subprocess.CalledProcessError, e:
+			log.error("Couldn't check out revision %s" % revision)
+			log.error("output was %s" % e.output)
 		#seems to go to stderr?
 
-	def compile(self):
-		"""Compile at the current revision."""
+	def __extract_json(self, out):
+		return out[out.index("{\n"):]
+
+	def compile(self, hostname, site):
+		"""Compile at the current revision.
+
+		Args:
+			hostname like db1001
+			site like eqiad
+		"""
 		log.info("Compiling...")
-		out = subprocess.check_output(["puppet",
-			"apply", "manifests/site.pp", "--noop",
-			"--facts_terminus=facter", "--confdir=.",
-			"--templatedir=./templates"], cwd=self.repopath)
-		print("compile output")
-		print(out)
+		try:
+			cpenv = os.environ.copy()
+			cpenv["FACTER_hostname"] = hostname
+			cpenv["FACTER_site"] = site
+			cpenv["FACTER_operatingsystem"] = "Ubuntu"
+			#out = subprocess.check_output(["puppet",
+			#	"apply", "manifests/site.pp", "--noop",
+			#	"--facts_terminus=facter", "--confdir=.",
+			#	"--templatedir=./templates"], cwd=self.repopath, env=cpenv)
+			out = subprocess.check_output(["puppet",
+				"master", "--facts_terminus=facter",
+				"--compile=" + hostname,
+				"--confdir=.", "--templatedir=./templates"], 
+				cwd=self.repopath, env=cpenv)
+			return self.__extract_json(out)
+		except subprocess.CalledProcessError, e:
+			log.error("Couldn't compile catalog (%s)" % e.cmd)
+			log.error("output was %s" % e.output)
+			return ""
 	
 class DifferTest(unittest.TestCase):
 	def test_checkout(self):
 		d = Differ()
+		d.checkout(REV_HEAD)
 		d.checkout("a9d80defc55ca8e1f5622e21994e457740d24d5e")
 		d.checkout("8606d2bb5a62f71adf917bd2f485b393ebe3d961")
-
-	def test_compile(self):
-		d = Differ()
-		d.checkout("cf985570ff5dcd5170cc8704747785a14364ff71")
-		d.compile()
 
 	def test_patch(self):
 		p = Patcher(repopath="operations-puppet")
 		p.patch(1369159391)
 
-class IncTest(unittest.TestCase):
 	def test_dpatch(self):
 		p = Patcher(repopath="operations-puppet")
-		p.diff_patch()
+		p.diff_patch(1369159391)
+
+	def test_compile(self):
+		d = Differ()
+		d.checkout("cf985570ff5dcd5170cc8704747785a14364ff71")
+		self.test_dpatch()
+		d.compile("db1001", "eqiad")
 
 if __name__ == "__main__":
 	unittest.main()
