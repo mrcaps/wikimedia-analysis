@@ -1,7 +1,8 @@
 """Parse the output of writelog.sh into info about git commits.
 """
-import fileinput
+import argparse
 import json
+import sys
 
 SEP="@@@@@"
 
@@ -135,7 +136,16 @@ def filter_has_file(name):
 	return fn
 
 if __name__ == "__main__":
-	#print_files(fileinput.input())
-	#write_json(fileinput.input(), "all-changes.json")
-	write_json(fileinput.input(), "filtered-mysql.json",
-		filter_has_file("manifests/mysql.pp"))
+	parser = argparse.ArgumentParser()
+	parser.add_argument("mode")
+	args = parser.parse_args()
+
+	if args.mode == "filtered":
+		write_json(sys.stdin, "filtered-mysql.json",
+			filter_has_file("manifests/mysql.pp"))
+	elif args.mode == "unfiltered":
+		write_json(sys.stdin, "all-changes.json")
+	elif args.mode == "print_files":
+		print_files(sys.stdin)
+
+	

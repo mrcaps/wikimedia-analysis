@@ -4,6 +4,13 @@ import subprocess
 import unittest
 from distutils import dir_util
 import os
+import json
+
+try:
+    from cStringIO import StringIO
+except:
+    from StringIO import StringIO
+import jsontools
 
 class Patcher(object):
 	def __init__(self, repopath, patchpath="patch-full", diffpath="patch-diff"):
@@ -82,8 +89,15 @@ class Patcher(object):
 REV_HEAD = "."
 
 class Differ(object):
-	def __init__(self, repopath="operations-puppet"):
+	def __init__(self, repopath="operations-puppet", nodeslist="nodes.csv"):
+		"""
+		Args:
+			repopath: git repository path
+			nodeslist: list of nodes, one per line
+		"""
 		self.repopath = repopath
+		self.nodeslist = nodeslist
+		self.outpath = "output"
 		self.patcher = Patcher(repopath)
 
 	def checkout(self, revision):
@@ -110,7 +124,7 @@ class Differ(object):
 			hostname like db1001
 			site like eqiad
 		"""
-		log.info("Compiling...")
+		log.info("Compiling hostname=%s site=%s" % (hostname, site))
 		try:
 			cpenv = os.environ.copy()
 			cpenv["FACTER_hostname"] = hostname
@@ -129,7 +143,98 @@ class Differ(object):
 		except subprocess.CalledProcessError, e:
 			log.error("Couldn't compile catalog (%s)" % e.cmd)
 			log.error("output was %s" % e.output)
-			return ""
+			return e.output
+
+	def get_nodes(self):
+		"""
+		Returns:
+			generator of (node, site)
+		"""
+		with open(self.nodeslist, "r") as fp:
+			for line in fp:
+				yield tuple(line.split(".")[0:2])
+
+	def get_out_path(self, node):
+		return os.path.join(self.outpath, node[0] + "." + node[1] + ".wmnet")
+
+	def get_out_file(self, node, commit):
+		return commit["time"] + "-" + commit["hash"] + ".json"
+
+	def run(self, nodes, fcommits, tmin, tmax, skip_existing=True):
+		"""Run a compile over the given range.
+
+		Args:
+			nodes: which nodes to evaluate
+			fcommits: file to get commits from
+			tmin: minimum commit timestamp
+			tmax: maximum commit timestamp
+		"""
+
+		log.info("Running over |nodes|=%d tmin=%d, tmax=%d" % 
+			(len(nodes), tmin, tmax))
+
+		with open(fcommits, "r") as fp:
+			commits = json.load(fp)
+		for com in commits:
+			ts = int(com["time"])
+			if ts >= tmin and ts <= tmax:
+				for node in nodes:
+					(hostname, site) = node
+					outpath = self.get_out_path(node)
+					try:
+						os.makedirs(outpath)
+					except:
+						pass
+					comppath = os.path.join(outpath, self.get_out_file(node, com))
+					if skip_existing and os.path.exists(comppath):
+						log.info("skip existing %s" % comppath)
+					else:
+						log.info("compiling %s" % comppath)
+						cmpout = self.compile(hostname, site)
+						with open(comppath, "w") as fp:
+							fp.write(cmpout)
+
+	def compute_diffs(self, nodes):
+		"""Compute all diffs between commits for the given nodes."""
+		for node in nodes:
+			coms = []
+			basepath = self.get_out_path(node)
+			for fn in os.listdir(basepath):
+				(ts, hash) = os.path.splitext(fn)[0].split("-")
+				coms.append((ts, hash, os.path.join(basepath, fn)))
+			coms.sort()
+
+			nodiffs = 0
+
+			for dx in range(len(coms)-1):
+				ca = coms[dx][2]
+				cb = coms[dx+1][2]
+				with open(ca, "r") as fp:
+					jsa = json.load(fp)
+				with open(cb, "r") as fp:
+					jsb = json.load(fp)
+
+				#canonicalize
+				diff = json_diff(canonicalize(jsa), canonicalize(jsb))
+				if len(diff) > 0:
+					log.info("Got diff for commit " + cb)
+					with open(cb + ".diff", "w") as fp:
+						fp.write(diff)
+				else:
+					nodiffs += 1
+
+			log.info("%d commits with no diffs on node %s" % (nodiffs, node))
+
+def canonicalize(js):
+	js["data"]["edges"].sort()
+	js["data"]["resources"].sort()
+	js["data"]["version"] = 1
+
+def json_diff(jsa, jsb):
+	stream = StringIO()
+	jsontools.jsondiff(jsa, jsb, stream=stream)
+	stream.seek(0)
+	return stream.getvalue()
 	
 class DifferTest(unittest.TestCase):
 	def test_checkout(self):
@@ -152,8 +257,33 @@ class DifferTest(unittest.TestCase):
 		self.test_dpatch()
 		d.compile("db1001", "eqiad")
 
+	def test_nodeparse(self):
+		d = Differ()
+		self.assertTrue(len(list(d.get_nodes())) > 10)
+		print list(d.get_nodes())
+
+	def test_run(self):
+		d = Differ()
+		d.run([("db1001", "eqiad")], "filtered-mysql.json", 1367435786, 2000000000)
+
+	def test_jsondiff(self):
+		jsa = json.loads('{"foo": "bar", "zim": "bob", "d": {"nest": [1,2,3]}}')
+		jsb = json.loads('{"woo": "baz", "zim": "bob", "d": {"nest": [1,2,5]}}')
+		print json_diff(jsa, jsb)
+
+class IncTest(unittest.TestCase):
+	def test_compute(self):
+		d = Differ()
+		d.compute_diffs([("db1001", "eqiad")])
+
+def real_run():
+	d = Differ()
+	#d.run([("db1001", "eqiad")], "filtered-mysql.json", 0, 2000000000)
+	d.run(list(d.get_nodes()), "filtered-mysql.json", 0, 2000000000)
+
 if __name__ == "__main__":
-	unittest.main()
+	#unittest.main()
+	real_run()
 
 	#suite = unittest.TestSuite()
 	#suite.addTests(IncTest)
