@@ -102,7 +102,7 @@ class Differ(object):
 		"""
 		self.repopath = repopath
 		self.nodeslist = nodeslist
-		self.outpath = "output"
+		self.outpath = "/var/output"
 		self.patcher = Patcher(repopath)
 
 	def checkout(self, revision):
@@ -296,6 +296,9 @@ def real_run():
 	#compute changes over these nodes
 	nodelist = list(d.get_nodes())
 	nodelist = [("db1046", "eqiad")]
+	import generate_assignments
+	nodelist = generate_assignments.get_my_nodes()
+	print "my nodes are", nodelist
 
 	#run compile
 	d.run(nodelist, "filtered-mysql.json", 0, 2000000000)

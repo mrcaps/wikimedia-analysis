@@ -5,3 +5,4 @@ times.csv
 all-changes.json
 filtered-mysql.json
 output*
+*.pyc
