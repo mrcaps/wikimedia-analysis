@@ -18,6 +18,7 @@ def get_my_nodes():
 	dx = 0
 	for item in diffnodes:
 		assigns[item] = hosts[dx % len(hosts)]
+		dx += 1
 
 	myitems = []
 	fqdn = socket.getfqdn()
