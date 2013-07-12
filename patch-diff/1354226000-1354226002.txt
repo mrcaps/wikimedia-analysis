@@ -1,0 +1,3 @@
+manifests/site.pp
+-import "analytics.pp"
++#import "analytics.pp"

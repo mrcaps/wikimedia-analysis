@@ -25,11 +25,16 @@ class Patcher(object):
 			dir_util.copy_tree(self.patchpath, self.repopath)
 		except Exception, e:
 			log.error("Patch error:" + str(e))
+		#do the diff patch
+		self.diff_patch(timestamp)
 
 	def grep_patch(self, fpath, orig, replace):
 		"""Replace the text _orig_ in file 
 		with path _fpath_ with _replace_"""
 		replaced = None
+		if not os.path.exists(fpath):
+			log.warning("No file to patch: %s" % (fpath))
+			return
 		with open(fpath, "r") as fp:
 			contents = fp.read()
 			replaced = contents.replace(orig, replace)
@@ -189,6 +194,11 @@ class Differ(object):
 					if skip_existing and os.path.exists(comppath):
 						log.info("skip existing %s" % comppath)
 					else:
+						log.info("checking out @rev=%s..." % str(com["hash"]))
+						self.checkout(REV_HEAD)
+						self.checkout(com["hash"])
+						log.info("patching...")
+						self.patcher.patch(ts)
 						log.info("compiling %s" % comppath)
 						cmpout = self.compile(hostname, site)
 						with open(comppath, "w") as fp:
@@ -200,8 +210,10 @@ class Differ(object):
 			coms = []
 			basepath = self.get_out_path(node)
 			for fn in os.listdir(basepath):
-				(ts, hash) = os.path.splitext(fn)[0].split("-")
-				coms.append((ts, hash, os.path.join(basepath, fn)))
+				(name, ext) = os.path.splitext(fn)
+				if ext == "json":
+					(ts, hash) = name.split("-")
+					coms.append((ts, hash, os.path.join(basepath, fn)))
 			coms.sort()
 
 			nodiffs = 0
@@ -209,10 +221,13 @@ class Differ(object):
 			for dx in range(len(coms)-1):
 				ca = coms[dx][2]
 				cb = coms[dx+1][2]
-				with open(ca, "r") as fp:
-					jsa = json.load(fp)
-				with open(cb, "r") as fp:
-					jsb = json.load(fp)
+				try:
+					with open(ca, "r") as fp:
+						jsa = json.load(fp)
+					with open(cb, "r") as fp:
+						jsb = json.load(fp)
+				except ValueError, e:
+					log.error("could not load json for %s<->%s" % (ca, cb))
 
 				#canonicalize
 				diff = json_diff(canonicalize(jsa), canonicalize(jsb))
@@ -278,8 +293,15 @@ class IncTest(unittest.TestCase):
 
 def real_run():
 	d = Differ()
-	#d.run([("db1001", "eqiad")], "filtered-mysql.json", 0, 2000000000)
-	d.run(list(d.get_nodes()), "filtered-mysql.json", 0, 2000000000)
+	#compute changes over these nodes
+	nodelist = list(d.get_nodes())
+	nodelist = [("db1046", "eqiad")]
+
+	#run compile
+	d.run(nodelist, "filtered-mysql.json", 0, 2000000000)
+	
+	#compute diffs
+	d.compute_diffs(nodelist)
 
 if __name__ == "__main__":
 	#unittest.main()
