@@ -4,6 +4,9 @@ import socket
 def get_my_nodes():
 	"""Get nodes assigned to this host for computation
 	"""
+	if not os.path.exists("/etc/cluster-hosts"):
+		raise Exception("No cluster hosts specified")
+
 	#grab list of hosts in cluster, in order
 	hosts = []
 	with open("/etc/cluster-hosts", "r") as fp:

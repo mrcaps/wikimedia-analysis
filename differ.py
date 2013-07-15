@@ -211,16 +211,20 @@ class Differ(object):
 			basepath = self.get_out_path(node)
 			for fn in os.listdir(basepath):
 				(name, ext) = os.path.splitext(fn)
-				if ext == "json":
+				if ext.endswith("json"):
 					(ts, hash) = name.split("-")
 					coms.append((ts, hash, os.path.join(basepath, fn)))
 			coms.sort()
 
 			nodiffs = 0
+			withdiffs = 0
 
 			for dx in range(len(coms)-1):
 				ca = coms[dx][2]
 				cb = coms[dx+1][2]
+
+				jsa = None
+				jsb = None
 				try:
 					with open(ca, "r") as fp:
 						jsa = json.load(fp)
@@ -229,21 +233,55 @@ class Differ(object):
 				except ValueError, e:
 					log.error("could not load json for %s<->%s" % (ca, cb))
 
-				#canonicalize
-				diff = json_diff(canonicalize(jsa), canonicalize(jsb))
-				if len(diff) > 0:
-					log.info("Got diff for commit " + cb)
-					with open(cb + ".diff", "w") as fp:
-						fp.write(diff)
-				else:
-					nodiffs += 1
+				if jsa and jsb:
+					#canonicalize
+					diff = json_diff(canonicalize(jsa), canonicalize(jsb))
+					if len(diff) > 0:
+						log.info("Got diff for commit " + cb)
+						with open(cb + ".diff", "w") as fp:
+							fp.write(diff)
+						withdiffs += 1
+					else:
+						nodiffs += 1
 
-			log.info("%d commits with no diffs on node %s" % (nodiffs, node))
+			log.info("%d commits with no diffs, %d commits with diffs on node %s" % (nodiffs, withdiffs, node))
+
+def canonicalize_basic(js):
+	js["data"]["edges"].sort()
+	js["data"]["resources"].sort()
+	for res in js["data"]["resources"]:
+		if "line" in res:
+			del res["line"]
+	js["data"]["version"] = 1
+	return js
 
 def canonicalize(js):
 	js["data"]["edges"].sort()
 	js["data"]["resources"].sort()
-	js["data"]["version"] = 1
+
+	jsnew = dict()
+	jsnew["edges"] = dict()
+	for edge in js["data"]["edges"]:
+		if not edge["source"] in jsnew["edges"]:
+			jsnew["edges"][edge["source"]] = dict()
+
+		target = edge["target"]
+		if not target.startswith("Notify["):
+			jsnew["edges"][edge["source"]][target] = True
+
+	jsnew["resources"] = dict()
+	for res in js["data"]["resources"]:
+		if "line" in res:
+			del res["line"]
+		if "tags" in res:
+			newtags = dict()
+			for tag in res["tags"]:
+				newtags[tag] = True
+			res["tags"] = newtags
+		if "type" in res and res["type"] != "Notify":
+			jsnew["resources"][res["title"]] = res
+
+	return jsnew
 
 def json_diff(jsa, jsb):
 	stream = StringIO()
@@ -296,8 +334,11 @@ def real_run():
 	#compute changes over these nodes
 	nodelist = list(d.get_nodes())
 	nodelist = [("db1046", "eqiad")]
-	import generate_assignments
-	nodelist = generate_assignments.get_my_nodes()
+	try:
+		import generate_assignments
+		nodelist = generate_assignments.get_my_nodes()
+	except:
+		log.error("Couldn't get local node list; reverting to manual")
 	print "my nodes are", nodelist
 
 	#run compile
