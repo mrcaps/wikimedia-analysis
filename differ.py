@@ -223,23 +223,31 @@ class Differ(object):
 				ca = coms[dx][2]
 				cb = coms[dx+1][2]
 
-				jsa = None
-				jsb = None
-				try:
-					with open(ca, "r") as fp:
-						jsa = json.load(fp)
-					with open(cb, "r") as fp:
-						jsb = json.load(fp)
-				except ValueError, e:
-					log.error("could not load json for %s<->%s" % (ca, cb))
+				def getjson(fname):
+					try:
+						with open(ca, "r") as fp:
+							js = json.load(fp)
+						return js
+					except ValueError, e:
+						log.error("could not load json for %s" % fname)
+						return None
 
-				if jsa and jsb:
+				jsa = getjson(ca)
+				jsb = getjson(cb)
+
+				def write_result(contents):
+					with open(cb + ".diff", "w") as fp:
+						fp.write(contents)
+
+				if (jsa and not jsb) or (not jsa and jsb):
+					write_result('{"error":"unparseable"}\n')
+					withdiffs += 1
+				elif jsa and jsb:
 					#canonicalize
 					diff = json_diff(canonicalize(jsa), canonicalize(jsb))
 					if len(diff) > 0:
 						log.info("Got diff for commit " + cb)
-						with open(cb + ".diff", "w") as fp:
-							fp.write(diff)
+						write_result(diff)
 						withdiffs += 1
 					else:
 						nodiffs += 1
@@ -332,13 +340,13 @@ class IncTest(unittest.TestCase):
 def real_run():
 	d = Differ()
 	#compute changes over these nodes
-	nodelist = list(d.get_nodes())
 	nodelist = [("db1046", "eqiad")]
 	try:
 		import generate_assignments
 		nodelist = generate_assignments.get_my_nodes()
 	except:
 		log.error("Couldn't get local node list; reverting to manual")
+	nodelist = list(d.get_nodes())
 	print "my nodes are", nodelist
 
 	#run compile
