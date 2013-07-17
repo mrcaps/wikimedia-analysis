@@ -13,6 +13,10 @@ manifests/base.pp
 +		#nrpe::monitor_service { "raid" : description => "RAID", nrpe_command  => "sudo /usr/local/bin/check-raid.py" }
 
 manifests/base.pp
+-	nrpe::monitor_service { "disk_space" : description => "Disk space", nrpe_command  => "/usr/lib/nagios/plugins/check_disk -w 6% -c 3% -l -e" }
++	#	nrpe::monitor_service { "disk_space" : description => "Disk space", nrpe_command  => "/usr/lib/nagios/plugins/check_disk -w 6% -c 3% -l -e" }
+
+manifests/base.pp
 -	nrpe::monitor_service { "raid" : description => "RAID", nrpe_command  => "sudo /usr/local/bin/check-raid.py" }
 +	#nrpe::monitor_service { "raid" : description => "RAID", nrpe_command  => "sudo /usr/local/bin/check-raid.py" }
 

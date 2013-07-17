@@ -166,7 +166,7 @@ class Differ(object):
 		return commit["time"] + "-" + commit["hash"] + ".json"
 
 	def run(self, nodes, fcommits, tmin, tmax, skip_existing=True):
-		"""Run a compile over the given range.
+		"""Run a compile over the given range, bisecting diff search
 
 		Args:
 			nodes: which nodes to evaluate
@@ -180,30 +180,94 @@ class Differ(object):
 
 		with open(fcommits, "r") as fp:
 			commits = json.load(fp)
+		
+		torun = []
 		for com in commits:
 			ts = int(com["time"])
 			if ts >= tmin and ts <= tmax:
-				for node in nodes:
-					(hostname, site) = node
-					outpath = self.get_out_path(node)
-					try:
-						os.makedirs(outpath)
-					except:
-						pass
-					comppath = os.path.join(outpath, self.get_out_file(node, com))
-					if skip_existing and os.path.exists(comppath):
-						log.info("skip existing %s" % comppath)
-					else:
-						log.info("checking out @rev=%s..." % str(com["hash"]))
-						self.checkout(REV_HEAD)
-						self.checkout(com["hash"])
-						log.info("patching...")
-						self.patcher.patch(ts)
-						log.info("compiling %s" % comppath)
-						cmpout = self.compile(hostname, site)
-						with open(comppath, "w") as fp:
-							fp.write(cmpout)
+				torun.append(com)
 
+		#sort by time
+		torun.sort(cmp=lambda a, b: int(a["time"]) - int(b["time"]))
+
+		for node in nodes:
+			self.__cmp_region(torun, node, 0, len(torun)-1)
+
+	def __cmp_region(self, commits, node, lodx, hidx):
+		log.info("__cmp_region from %d to %d" % (lodx, hidx))
+		locom_path = self.get_compiled(commits[lodx], node)
+		hicom_path = self.get_compiled(commits[hidx], node)
+		print "locomp, hicomp = \n\t%s\n\t%s" % (locom_path, hicom_path)
+		#compute the diff
+		diff = self.compute_diff(locom_path, hicom_path)
+		if diff != Differ.DIFF_NO and hidx > lodx + 1:
+			#recurse into lower parts
+			midpt = int((lodx + hidx)/2)
+			self.__cmp_region(commits, node, lodx, midpt)
+			self.__cmp_region(commits, node, midpt, hidx)
+
+	def get_compiled(self, com, node):
+		"""get compiled filename for a given commit and node"""
+		try:
+			os.makedirs(self.get_out_path(node))
+		except:
+			pass
+		comppath = os.path.join(self.get_out_path(node), self.get_out_file(node, com))
+		if not os.path.exists(comppath):
+			log.info("compiling for node=%s @rev=%s..." % (node, str(com["hash"])))
+			self.checkout(REV_HEAD)
+			self.checkout(com["hash"])
+			log.info("patching...")
+			self.patcher.patch(int(com["time"]))
+			log.info("compiling into %s" % comppath)
+			(hostname, site) = node
+			cmpout = self.compile(hostname, site)
+			with open(comppath, "w") as fp:
+				fp.write(cmpout)
+		return comppath
+
+	DIFF_MAYBE = 0
+	DIFF_NO = 1
+	DIFF_YES = 2
+
+	def compute_diff(self, patha, pathb):
+		"""Compute diffs between commits that were written to patha and pathb.
+
+		Returns:
+			True if there is a diff
+		"""
+		def getjson(fname):
+			try:
+				with open(fname, "r") as fp:
+					js = json.load(fp)
+				return js
+			except ValueError, e:
+				log.error("could not load json for %s: %s" % (fname, e))
+				return None
+
+		jsa = getjson(patha)
+		jsb = getjson(pathb)
+
+		def write_result(contents):
+			with open(pathb + ".diff", "w") as fp:
+				fp.write(contents)
+
+		if (jsa and not jsb) or (not jsa and jsb):
+			write_result('{"error":"unparseable"}\n')
+			return Differ.DIFF_YES
+		elif jsa and jsb:
+			#canonicalize
+			diff = json_diff(canonicalize(jsa), canonicalize(jsb))
+			if len(diff) > 0:
+				log.info("Got diff for commit " + pathb)
+				write_result(diff)
+				return Differ.DIFF_YES
+			else:
+				log.info("No diff for commit " + pathb)
+				return Differ.DIFF_NO
+		elif not jsa and not jsb:
+			return Differ.DIFF_MAYBE
+		
 	def compute_diffs(self, nodes):
 		"""Compute all diffs between commits for the given nodes."""
 		for node in nodes:
@@ -223,34 +287,11 @@ class Differ(object):
 				ca = coms[dx][2]
 				cb = coms[dx+1][2]
 
-				def getjson(fname):
-					try:
-						with open(ca, "r") as fp:
-							js = json.load(fp)
-						return js
-					except ValueError, e:
-						log.error("could not load json for %s" % fname)
-						return None
-
-				jsa = getjson(ca)
-				jsb = getjson(cb)
-
-				def write_result(contents):
-					with open(cb + ".diff", "w") as fp:
-						fp.write(contents)
-
-				if (jsa and not jsb) or (not jsa and jsb):
-					write_result('{"error":"unparseable"}\n')
+				d = self.compute_diff(ca, cb)
+				if d == Differ.DIFF_YES:
 					withdiffs += 1
-				elif jsa and jsb:
-					#canonicalize
-					diff = json_diff(canonicalize(jsa), canonicalize(jsb))
-					if len(diff) > 0:
-						log.info("Got diff for commit " + cb)
-						write_result(diff)
-						withdiffs += 1
-					else:
-						nodiffs += 1
+				elif d == Differ.DIFF_NO:
+					nodiffs += 1
 
 			log.info("%d commits with no diffs, %d commits with diffs on node %s" % (nodiffs, withdiffs, node))
 
@@ -340,20 +381,18 @@ class IncTest(unittest.TestCase):
 def real_run():
 	d = Differ()
 	#compute changes over these nodes
-	nodelist = [("db1046", "eqiad")]
+	
+	nodelist = list(d.get_nodes())
 	try:
 		import generate_assignments
 		nodelist = generate_assignments.get_my_nodes()
 	except:
 		log.error("Couldn't get local node list; reverting to manual")
-	nodelist = list(d.get_nodes())
+	nodelist = [("db1046", "eqiad")]
 	print "my nodes are", nodelist
 
 	#run compile
 	d.run(nodelist, "filtered-mysql.json", 0, 2000000000)
-	
-	#compute diffs
-	d.compute_diffs(nodelist)
 
 if __name__ == "__main__":
 	#unittest.main()
