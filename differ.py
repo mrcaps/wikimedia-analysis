@@ -238,6 +238,10 @@ class Differ(object):
 			self.__cmp_region(commits, node, lodx, midpt)
 			self.__cmp_region(commits, node, midpt, hidx)
 
+	def __node_to_string(self, node):
+		(hostname, site) = node
+		return "%s.%s.wmnet" % (hostname, site)
+
 	def get_compiled(self, com, node):
 		"""get compiled filename for a given commit and node"""
 		try:
@@ -262,6 +266,8 @@ class Differ(object):
 	DIFF_NO = 1
 	DIFF_YES = 2
 
+	EXTENSION_DIFF = ".diff"
+
 	def compute_diff(self, patha, pathb):
 		"""Compute diffs between commits that were written to patha and pathb.
 
@@ -281,7 +287,7 @@ class Differ(object):
 		jsb = getjson(pathb)
 
 		def write_result(contents):
-			with open(pathb + ".diff", "w") as fp:
+			with open(pathb + Differ.EXTENSION_DIFF, "w") as fp:
 				fp.write(contents)
 
 		if (jsa and not jsb) or (not jsa and jsb):
@@ -326,6 +332,30 @@ class Differ(object):
 					nodiffs += 1
 
 			log.info("%d commits with no diffs, %d commits with diffs on node %s" % (nodiffs, withdiffs, node))
+
+	def collect_diffs(self, nodes, outfile):
+		import hashlib
+		import csv
+
+		with open(outfile, "w") as outfp:
+			writer = csv.writer(outfp)
+			writer.writerow(["node", "timestamp", "commithash", "diffhash"])
+
+			"""Collect all diffs into a single output file."""
+			for node in nodes:
+				basepath = self.get_out_path(node)
+				for fn in os.listdir(basepath):
+					(base, ext) = os.path.splitext(fn)
+					if ext == Differ.EXTENSION_DIFF:
+						(base, ext) = os.path.splitext(base)
+						(ts, commithash) = base.split("-")
+						with open(os.path.join(basepath, fn), "r") as fp:
+							contents = fp.read()
+						hasher = hashlib.md5()
+						hasher.update(contents)
+						writer.writerow([
+							self.__node_to_string(node), 
+							ts, commithash, hasher.hexdigest()])
 
 def canonicalize_basic(js):
 	js["data"]["edges"].sort()
@@ -427,10 +457,13 @@ def real_run():
 	#d.run_bisect(nodelist, "filtered-mysql.json", 0, 2000000000)
 
 	#run compile filtered
-	def filter_has_mysql(com):
-		return ("diff" in com and "files" in com["diff"] and 
-			"manifests/mysql.pp" in com["diff"]["files"].keys())
-	d.run_filtered(nodelist, "all-changes.json", 0, 2000000000, filter_has_mysql)
+	if False:
+		def filter_has_mysql(com):
+			return ("diff" in com and "files" in com["diff"] and 
+				"manifests/mysql.pp" in com["diff"]["files"].keys())
+		d.run_filtered(nodelist, "all-changes.json", 0, 2000000000, filter_has_mysql)
+
+	d.collect_diffs(nodelist, "diff-collected.csv")
 
 if __name__ == "__main__":
 	#unittest.main()
