@@ -165,7 +165,39 @@ class Differ(object):
 	def get_out_file(self, node, commit):
 		return commit["time"] + "-" + commit["hash"] + ".json"
 
-	def run(self, nodes, fcommits, tmin, tmax, skip_existing=True):
+	def run_filtered(self, nodes, fcommits, tmin, tmax, filt):
+		"""Run a compile over the given range, evaluating diffs only
+		on the filtered commits.
+
+		Args:
+			nodes: which nodes to evaluate
+			fcommits: file to get commits from
+			tmin: minimum commit timestamp
+			tmax: maximum commit timestamp
+			filt: function(commit) -> [True|False]
+		"""
+		log.info("Running filtered over |nodes|=%d tmin=%d, tmax=%d" % 
+			(len(nodes), tmin, tmax))
+
+		with open(fcommits, "r") as fp:
+			commits = json.load(fp)
+		
+		torun = []
+		for cdx in xrange(1, len(commits)):
+			com = commits[cdx]
+			com_prev = commits[cdx-1]
+			ts = int(com["time"])
+			if ts >= tmin and ts <= tmax and filt(com):
+				torun.append((com_prev, com))
+
+		for node in nodes:
+			for (com_prev, com) in torun:
+				com_prev_path = self.get_compiled(com_prev, node)
+				com_path = self.get_compiled(com, node)
+				self.compute_diff(com_prev_path, com_path)
+
+
+	def run_bisect(self, nodes, fcommits, tmin, tmax):
 		"""Run a compile over the given range, bisecting diff search
 
 		Args:
@@ -175,7 +207,7 @@ class Differ(object):
 			tmax: maximum commit timestamp
 		"""
 
-		log.info("Running over |nodes|=%d tmin=%d, tmax=%d" % 
+		log.info("Running bisect over |nodes|=%d tmin=%d, tmax=%d" % 
 			(len(nodes), tmin, tmax))
 
 		with open(fcommits, "r") as fp:
@@ -366,7 +398,7 @@ class DifferTest(unittest.TestCase):
 
 	def test_run(self):
 		d = Differ()
-		d.run([("db1001", "eqiad")], "filtered-mysql.json", 1367435786, 2000000000)
+		d.run_bisect([("db1001", "eqiad")], "filtered-mysql.json", 1367435786, 2000000000)
 
 	def test_jsondiff(self):
 		jsa = json.loads('{"foo": "bar", "zim": "bob", "d": {"nest": [1,2,3]}}')
@@ -392,7 +424,13 @@ def real_run():
 	print "my nodes are", nodelist
 
 	#run compile
-	d.run(nodelist, "filtered-mysql.json", 0, 2000000000)
+	#d.run_bisect(nodelist, "filtered-mysql.json", 0, 2000000000)
+
+	#run compile filtered
+	def filter_has_mysql(com):
+		return ("diff" in com and "files" in com["diff"] and 
+			"manifests/mysql.pp" in com["diff"]["files"].keys())
+	d.run_filtered(nodelist, "all-changes.json", 0, 2000000000, filter_has_mysql)
 
 if __name__ == "__main__":
 	#unittest.main()
