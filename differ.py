@@ -182,6 +182,9 @@ class Differ(object):
 		with open(fcommits, "r") as fp:
 			commits = json.load(fp)
 		
+		#sort by time
+		commits.sort(cmp=lambda a, b: int(a["time"]) - int(b["time"]))
+
 		torun = []
 		for cdx in xrange(1, len(commits)):
 			com = commits[cdx]
@@ -443,27 +446,27 @@ class IncTest(unittest.TestCase):
 def real_run():
 	d = Differ()
 	#compute changes over these nodes
-	
+	nodelist = [("db1046", "eqiad")]
 	nodelist = list(d.get_nodes())
 	try:
 		import generate_assignments
 		nodelist = generate_assignments.get_my_nodes()
 	except:
 		log.error("Couldn't get local node list; reverting to manual")
-	nodelist = [("db1046", "eqiad")]
-	print "my nodes are", nodelist
+	log.info("my nodes are", nodelist)
 
 	#run compile
 	#d.run_bisect(nodelist, "filtered-mysql.json", 0, 2000000000)
 
 	#run compile filtered
-	if False:
+	if True:
 		def filter_has_mysql(com):
 			return ("diff" in com and "files" in com["diff"] and 
 				"manifests/mysql.pp" in com["diff"]["files"].keys())
 		d.run_filtered(nodelist, "all-changes.json", 0, 2000000000, filter_has_mysql)
 
-	d.collect_diffs(nodelist, "diff-collected.csv")
+	if True:
+		d.collect_diffs(nodelist, "diff-collected.csv")
 
 if __name__ == "__main__":
 	#unittest.main()

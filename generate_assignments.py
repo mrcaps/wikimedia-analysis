@@ -1,5 +1,6 @@
 from differ import Differ
 import socket
+import os
 
 def get_my_nodes():
 	"""Get nodes assigned to this host for computation
