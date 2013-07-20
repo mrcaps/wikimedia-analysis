@@ -91,8 +91,6 @@ class Patcher(object):
 
 			run_apply()
 
-REV_HEAD = "."
-
 class Differ(object):
 	def __init__(self, repopath="operations-puppet", nodeslist="nodes.csv"):
 		"""
@@ -119,6 +117,18 @@ class Differ(object):
 			log.error("output was %s" % e.output)
 		#seems to go to stderr?
 
+	def clean_checkout(self):
+		"""Clean up the working copy."""
+
+		try:
+			out = subprocess.check_output(
+				["git", "clean", "-d", "-f", "-f"], cwd=self.repopath)
+			out = subprocess.check_output(
+				["chown", "-R", "puppet:puppet", "."], cwd=self.repopath)
+		except subprocess.CalledProcessError, e:
+			log.error("Couldn't clean revision %s" % revision)
+			log.error("output was %s" % e.output)			
+
 	def __extract_json(self, out):
 		return out[out.index("{\n"):]
 
@@ -142,6 +152,7 @@ class Differ(object):
 			out = subprocess.check_output(["puppet",
 				"master", "--facts_terminus=facter",
 				"--compile=" + hostname,
+				"--no-daemonize", "--debug",
 				"--confdir=.", "--templatedir=./templates"], 
 				cwd=self.repopath, env=cpenv)
 			return self.__extract_json(out)
@@ -165,15 +176,13 @@ class Differ(object):
 	def get_out_file(self, node, commit):
 		return commit["time"] + "-" + commit["hash"] + ".json"
 
-	def run_filtered(self, nodes, fcommits, tmin, tmax, filt):
+	def run_filtered(self, nodes, fcommits, filt):
 		"""Run a compile over the given range, evaluating diffs only
 		on the filtered commits.
 
 		Args:
 			nodes: which nodes to evaluate
 			fcommits: file to get commits from
-			tmin: minimum commit timestamp
-			tmax: maximum commit timestamp
 			filt: function(commit) -> [True|False]
 		"""
 		log.info("Running filtered over |nodes|=%d tmin=%d, tmax=%d" % 
@@ -181,16 +190,13 @@ class Differ(object):
 
 		with open(fcommits, "r") as fp:
 			commits = json.load(fp)
-		
-		#sort by time
 		commits.sort(cmp=lambda a, b: int(a["time"]) - int(b["time"]))
 
 		torun = []
 		for cdx in xrange(1, len(commits)):
 			com = commits[cdx]
 			com_prev = commits[cdx-1]
-			ts = int(com["time"])
-			if ts >= tmin and ts <= tmax and filt(com):
+			if filt(com):
 				torun.append((com_prev, com))
 
 		for node in nodes:
@@ -199,6 +205,35 @@ class Differ(object):
 				com_path = self.get_compiled(com, node)
 				self.compute_diff(com_prev_path, com_path)
 
+	def run_single_commit(self, node, fcommits, hash):
+		"""Get a diff for a single commit.
+
+		Args:
+			node: which node to evaluate
+			fcommits: file to get commits from
+			hash: the commit hash to evaluate (to last commit)
+		"""
+		log.info("Computing diff for single commit %s" % hash)
+
+		with open(fcommits, "r") as fp:
+			commits = json.load(fp)
+		commits.sort(cmp=lambda a, b: int(a["time"]) - int(b["time"]))
+
+		for cdx in xrange(1, len(commits)):
+			com = commits[cdx]
+			com_prev = commits[cdx-1]
+			ts = int(com["time"])
+			if com["hash"] == hash:
+				com_prev_path = self.get_compiled(com_prev, node, use_cached=False)
+				com_path = self.get_compiled(com, node, use_cached=False)
+				res = self.compute_diff(com_prev_path, com_path)
+				respath = self.__get_diff_path(com_path)
+				if res == Differ.DIFF_YES:
+					log.info("Computed diff into %s" % (com_path))
+					with open(respath, "r") as fp:
+						log.info("diff was:\n%s" % (fp.read()))
+				else:
+					log.info("No diff.")
 
 	def run_bisect(self, nodes, fcommits, tmin, tmax):
 		"""Run a compile over the given range, bisecting diff search
@@ -245,16 +280,16 @@ class Differ(object):
 		(hostname, site) = node
 		return "%s.%s.wmnet" % (hostname, site)
 
-	def get_compiled(self, com, node):
+	def get_compiled(self, com, node, use_cached=True):
 		"""get compiled filename for a given commit and node"""
 		try:
 			os.makedirs(self.get_out_path(node))
 		except:
 			pass
 		comppath = os.path.join(self.get_out_path(node), self.get_out_file(node, com))
-		if not os.path.exists(comppath):
+		if not os.path.exists(comppath) or not use_cached:
 			log.info("compiling for node=%s @rev=%s..." % (node, str(com["hash"])))
-			self.checkout(REV_HEAD)
+			self.clean_checkout()
 			self.checkout(com["hash"])
 			log.info("patching...")
 			self.patcher.patch(int(com["time"]))
@@ -270,6 +305,9 @@ class Differ(object):
 	DIFF_YES = 2
 
 	EXTENSION_DIFF = ".diff"
+
+	def __get_diff_path(self, basepath):
+		return basepath + Differ.EXTENSION_DIFF
 
 	def compute_diff(self, patha, pathb):
 		"""Compute diffs between commits that were written to patha and pathb.
@@ -290,7 +328,7 @@ class Differ(object):
 		jsb = getjson(pathb)
 
 		def write_result(contents):
-			with open(pathb + Differ.EXTENSION_DIFF, "w") as fp:
+			with open(self.__get_diff_path(pathb), "w") as fp:
 				fp.write(contents)
 
 		if (jsa and not jsb) or (not jsa and jsb):
@@ -406,7 +444,6 @@ def json_diff(jsa, jsb):
 class DifferTest(unittest.TestCase):
 	def test_checkout(self):
 		d = Differ()
-		d.checkout(REV_HEAD)
 		d.checkout("a9d80defc55ca8e1f5622e21994e457740d24d5e")
 		d.checkout("8606d2bb5a62f71adf917bd2f485b393ebe3d961")
 
@@ -453,17 +490,21 @@ def real_run():
 		nodelist = generate_assignments.get_my_nodes()
 	except:
 		log.error("Couldn't get local node list; reverting to manual")
-	log.info("my nodes are", nodelist)
+	log.info("my nodes are %s" % (str(nodelist)))
 
 	#run compile
 	#d.run_bisect(nodelist, "filtered-mysql.json", 0, 2000000000)
+
+	#run single compile
+	#d.run_single_commit(("db1029", "eqiad"), 
+	#	"all-changes.json", "2d289497c1298d21c21156e28995956c17adc9f0")
 
 	#run compile filtered
 	if True:
 		def filter_has_mysql(com):
 			return ("diff" in com and "files" in com["diff"] and 
 				"manifests/mysql.pp" in com["diff"]["files"].keys())
-		d.run_filtered(nodelist, "all-changes.json", 0, 2000000000, filter_has_mysql)
+		d.run_filtered(nodelist, "all-changes.json", filter_has_mysql)
 
 	if True:
 		d.collect_diffs(nodelist, "diff-collected.csv")
