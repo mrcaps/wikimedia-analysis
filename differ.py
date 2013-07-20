@@ -185,8 +185,7 @@ class Differ(object):
 			fcommits: file to get commits from
 			filt: function(commit) -> [True|False]
 		"""
-		log.info("Running filtered over |nodes|=%d tmin=%d, tmax=%d" % 
-			(len(nodes), tmin, tmax))
+		log.info("Running filtered over |nodes|=%d" % (len(nodes)))
 
 		with open(fcommits, "r") as fp:
 			commits = json.load(fp)
