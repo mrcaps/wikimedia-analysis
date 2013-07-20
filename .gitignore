@@ -8,3 +8,5 @@ times.csv
 diff-collected.csv
 all-changes.json
 filtered-mysql.json
+
+run-differ.sh
