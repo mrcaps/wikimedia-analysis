@@ -5,6 +5,7 @@ import unittest
 from distutils import dir_util
 import os
 import json
+import time
 
 try:
     from cStringIO import StringIO
@@ -20,11 +21,19 @@ class Patcher(object):
 
 	def patch(self, timestamp):
 		#copy over the tree...
-		try:
-			log.info("Copying patch files")
-			dir_util.copy_tree(self.patchpath, self.repopath)
-		except Exception, e:
-			log.error("Patch error:" + str(e))
+		retries = 0
+		while retries < 4:
+			try:
+				log.info("Copying patch files from %s to %s" % (self.patchpath, self.repopath))
+				dir_util.copy_tree(self.patchpath, self.repopath)
+				log.info("Copy success")
+				break
+			except Exception, e:
+				log.error("Patch error:" + str(e))
+				##XXX: dumb hack for dir_util.copy_tree error
+				os.makedirs(os.path.join(self.repopath, "private", "manifests"))
+				time.sleep(0.1)
+				retries += 1
 		#do the diff patch
 		self.diff_patch(timestamp)
 
@@ -123,8 +132,7 @@ class Differ(object):
 		try:
 			out = subprocess.check_output(
 				["git", "clean", "-d", "-f", "-f"], cwd=self.repopath)
-			out = subprocess.check_output(
-				["chown", "-R", "puppet:puppet", "."], cwd=self.repopath)
+			self.checkout(".")
 		except subprocess.CalledProcessError, e:
 			log.error("Couldn't clean revision %s" % revision)
 			log.error("output was %s" % e.output)			
