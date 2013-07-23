@@ -1,0 +1,5476 @@
+{
+  "document_type": "Catalog",
+  "data": {
+    "classes": [
+      "settings",
+      "base::apt::update",
+      "base::instance-finish",
+      "ldap::client::instance-finish",
+      "default",
+      "standard",
+      "base",
+      "openstack::nova_config",
+      "passwords::openstack::nova",
+      "base::apt",
+      "base::puppet",
+      "passwords::puppet::database",
+      "passwords::root",
+      "base::decommissioned",
+      "base::resolving",
+      "base::remote-syslog",
+      "base::sysctl",
+      "base::motd",
+      "base::vimconfig",
+      "base::standard-packages",
+      "base::monitoring::host",
+      "ssh",
+      "ssh::client",
+      "ssh::hostkeys::publish",
+      "ssh::config",
+      "ssh::daemon",
+      "ssh::hostkeys::collect",
+      "ganglia",
+      "ntp::client",
+      "ntp",
+      "exim::simple-mail-sender",
+      "exim::packages",
+      "exim::service"
+    ],
+    "edges": [
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv98]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv115]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv167]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv155]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv123]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv121]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[thistle]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv122]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv180]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv110]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "File[/etc/puppet/puppet.conf.d/10-main.conf]",
+        "source": "Class[Base::Puppet]"
+      },
+      {
+        "target": "Class[Base::Decommissioned]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Cron[restartpuppet]",
+        "source": "Class[Base::Puppet]"
+      },
+      {
+        "target": "File[/etc/init.d/puppet]",
+        "source": "Class[Base::Puppet]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv146]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Package[jfsutils]",
+        "source": "Class[Base::Standard-packages]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[knsq14]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Monitor_service[ntp]",
+        "source": "Class[Ntp::Client]"
+      },
+      {
+        "target": "Class[Exim::Packages]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[knsq6]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[main]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv150]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Package[mlocate]",
+        "source": "Class[Base::Standard-packages]"
+      },
+      {
+        "target": "Package[exim4-daemon-light]",
+        "source": "Class[Exim::Packages]"
+      },
+      {
+        "target": "File[gmondconfig]",
+        "source": "Class[Ganglia]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv177]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv149]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[knsq4]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv166]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[knsq7]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[knsq5]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv151]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv145]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[db2]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Exim::Service]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv108]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv113]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv97]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv183]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv152]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv160]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[db1]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Exec[/sbin/start procps]",
+        "source": "Class[Base::Sysctl]"
+      },
+      {
+        "target": "File[/etc/resolv.conf]",
+        "source": "Class[Base::Resolving]"
+      },
+      {
+        "target": "Package[openssh-client]",
+        "source": "Class[Ssh::Client]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv94]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv114]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv170]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv125]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[mobile4]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv174]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv165]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Cron[remove-old-lockfile]",
+        "source": "Class[Base::Puppet]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv186]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Package[apt-show-versions]",
+        "source": "Class[Base::Apt]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv153]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Base::Apt]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv106]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv95]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Exec[/usr/bin/apt-get update]",
+        "source": "Class[Base::Apt::Update]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv104]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[lomaria]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[adler]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Monitor_service[ssh]",
+        "source": "Class[Base::Monitoring::Host]"
+      },
+      {
+        "target": "Class[Base::Remote-syslog]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Package[snmp]",
+        "source": "Class[Base::Puppet]"
+      },
+      {
+        "target": "Class[Base::Sysctl]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "File[/etc/default/exim4]",
+        "source": "Class[Exim::Packages]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv169]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Base::Motd]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv162]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "File[/etc/apt/sources.list.d/wikimedia.list]",
+        "source": "Class[Base::Apt]"
+      },
+      {
+        "target": "File[/etc/puppet/puppet.conf]",
+        "source": "Class[Base::Puppet]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv86]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[mobile5]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv129]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv99]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv184]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv120]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv136]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "File[/etc/ganglia/conf.d]",
+        "source": "Class[Ganglia]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv118]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Package[wikimedia-raid-utils]",
+        "source": "Class[Base::Standard-packages]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv161]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Service[ssh]",
+        "source": "Class[Ssh::Daemon]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv111]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[eiximenis]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Package[rsyslog]",
+        "source": "Class[Base::Remote-syslog]"
+      },
+      {
+        "target": "Class[Passwords::Openstack::Nova]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[db3]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Exim::Simple-mail-sender]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Class[Base]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv130]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "File[/etc/exim4/exim4.conf]",
+        "source": "Class[Exim::Simple-mail-sender]"
+      },
+      {
+        "target": "Class[Ssh]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv176]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv131]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv112]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv179]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Package[ntp]",
+        "source": "Class[Ntp]"
+      },
+      {
+        "target": "File[/usr/lib/ganglia/python_modules]",
+        "source": "Class[Ganglia]"
+      },
+      {
+        "target": "File[/etc/puppet/puppet.conf.d/]",
+        "source": "Class[Base::Puppet]"
+      },
+      {
+        "target": "Service[ntp]",
+        "source": "Class[Ntp]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv107]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "File[/etc/default/puppet]",
+        "source": "Class[Base::Puppet]"
+      },
+      {
+        "target": "Package[wikimedia-base]",
+        "source": "Class[Base::Standard-packages]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv96]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv168]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv91]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[knsq1]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv147]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Ssh::Daemon]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv157]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[knsq3]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv126]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv182]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv148]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Package[zsh-beta]",
+        "source": "Class[Base::Standard-packages]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv158]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv92]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Ssh::Client]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Class[Ntp::Client]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "File[ntp.conf]",
+        "source": "Class[Ntp]"
+      },
+      {
+        "target": "Service[gmond]",
+        "source": "Class[Ganglia]"
+      },
+      {
+        "target": "Class[Base::Standard-packages]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Group[gmetric]",
+        "source": "Systemuser[gmetric]"
+      },
+      {
+        "target": "File[/etc/rsyslog.d/90-remote-syslog.conf]",
+        "source": "Class[Base::Remote-syslog]"
+      },
+      {
+        "target": "File[/etc/apt/apt.conf.d/80wikimedia-proxy]",
+        "source": "Class[Base::Apt]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv140]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[knsq2]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[db7]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv90]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Exec[puppet snmp trap]",
+        "source": "Class[Base::Puppet]"
+      },
+      {
+        "target": "Class[Base::Resolving]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv124]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[sq47]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Monitor_service[db1046 puppet freshness]",
+        "source": "Class[Base::Puppet]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv139]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Service[rsyslog]",
+        "source": "Class[Base::Remote-syslog]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv102]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Package[puppet]",
+        "source": "Class[Base::Puppet]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv163]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv93]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "User[gmetric]",
+        "source": "Systemuser[gmetric]"
+      },
+      {
+        "target": "Class[Ganglia]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Package[exim4-config]",
+        "source": "Class[Exim::Packages]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv181]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Ntp]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv154]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Package[lldpd]",
+        "source": "Class[Base::Standard-packages]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv144]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv127]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Ssh::Hostkeys::Publish]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Exec[compile puppet.conf]",
+        "source": "Class[Base::Puppet]"
+      },
+      {
+        "target": "Package[openssh-server]",
+        "source": "Class[Ssh::Daemon]"
+      },
+      {
+        "target": "File[/etc/ssh/sshd_config]",
+        "source": "Class[Ssh::Config]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv185]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv100]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[project1]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Passwords::Puppet::Database]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv109]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv159]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv143]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Standard]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Class[Ssh::Hostkeys::Collect]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Class[Base::Vimconfig]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv87]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv128]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Base::Apt::Update]",
+        "source": "Stage[first]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv119]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Package[screen]",
+        "source": "Class[Base::Standard-packages]"
+      },
+      {
+        "target": "File[/etc/update-motd.d/97-last-puppet-run]",
+        "source": "Class[Base::Puppet]"
+      },
+      {
+        "target": "Class[Ssh::Config]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv178]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[yongle]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Node[default]",
+        "source": "Class[main]"
+      },
+      {
+        "target": "Package[tzdata]",
+        "source": "Class[Base::Standard-packages]"
+      },
+      {
+        "target": "Monitor_host[db1046]",
+        "source": "Class[Base::Monitoring::Host]"
+      },
+      {
+        "target": "Package[gmond]",
+        "source": "Class[Ganglia]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv171]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[knsq13]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv116]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv156]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Base::Puppet]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Package[xfsprogs]",
+        "source": "Class[Base::Standard-packages]"
+      },
+      {
+        "target": "Class[Base::Monitoring::Host]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv135]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv142]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv89]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[sq32]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv172]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[ixia]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[mobile3]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv101]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv117]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Systemuser[gmetric]",
+        "source": "Class[Ganglia]"
+      },
+      {
+        "target": "File[/etc/gmond.conf]",
+        "source": "Class[Ganglia]"
+      },
+      {
+        "target": "Package[ganglia-monitor]",
+        "source": "Class[Ganglia]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv138]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[transcode2]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Exec[sed-wikimedia-repository]",
+        "source": "Class[Base::Apt]"
+      },
+      {
+        "target": "Package[gdb]",
+        "source": "Class[Base::Standard-packages]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv132]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "File[/etc/update-motd.d/10-help-text]",
+        "source": "Class[Base::Motd]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[controller]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv133]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Package[wipe]",
+        "source": "Class[Base::Standard-packages]"
+      },
+      {
+        "target": "File[/etc/vim/vimrc.local]",
+        "source": "Class[Base::Vimconfig]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv134]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Ldap::Client::Instance-finish]",
+        "source": "Stage[last]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv164]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "File[wikimedia-base-sysctl]",
+        "source": "Class[Base::Sysctl]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv88]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv103]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Package[iperf]",
+        "source": "Class[Base::Standard-packages]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv173]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Base::Instance-finish]",
+        "source": "Stage[last]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv141]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[searchidx1]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Openstack::Nova_config]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv105]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv137]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Class[Passwords::Root]",
+        "source": "Stage[main]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[srv175]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[db20]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Base::Decommissioned::Decommissioned_host_role[db4]",
+        "source": "Class[Base::Decommissioned]"
+      },
+      {
+        "target": "Service[exim4]",
+        "source": "Class[Exim::Service]"
+      }
+    ],
+    "version": 1374532739,
+    "tags": [
+      "settings",
+      "base::apt::update",
+      "base::instance-finish",
+      "ldap::client::instance-finish",
+      "default",
+      "standard",
+      "base",
+      "openstack::nova_config",
+      "passwords::openstack::nova",
+      "base::apt",
+      "base::puppet",
+      "passwords::puppet::database",
+      "passwords::root",
+      "base::decommissioned",
+      "base::resolving",
+      "base::remote-syslog",
+      "base::sysctl",
+      "base::motd",
+      "base::vimconfig",
+      "base::standard-packages",
+      "base::monitoring::host",
+      "ssh",
+      "ssh::client",
+      "ssh::hostkeys::publish",
+      "ssh::config",
+      "ssh::daemon",
+      "ssh::hostkeys::collect",
+      "ganglia",
+      "ntp::client",
+      "ntp",
+      "exim::simple-mail-sender",
+      "exim::packages",
+      "exim::service",
+      "apt",
+      "update",
+      "instance-finish",
+      "ldap",
+      "client",
+      "openstack",
+      "nova_config",
+      "passwords",
+      "nova",
+      "puppet",
+      "database",
+      "root",
+      "decommissioned",
+      "resolving",
+      "remote-syslog",
+      "sysctl",
+      "motd",
+      "vimconfig",
+      "standard-packages",
+      "monitoring",
+      "host",
+      "hostkeys",
+      "publish",
+      "config",
+      "daemon",
+      "collect",
+      "exim",
+      "simple-mail-sender",
+      "packages",
+      "service",
+      "class",
+      "node"
+    ],
+    "resources": [
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv98",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv98",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv115",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv115",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv167",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv167",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv155",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv155",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv123",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv123",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv121",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv121",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "thistle",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "thistle",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv122",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv122",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv180",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv180",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv110",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv110",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 109,
+        "parameters": {
+          "notify": "Exec[compile puppet.conf]",
+          "group": "root",
+          "owner": "root",
+          "mode": "0444",
+          "content": "# This file is managed by Puppet!\n\n[main]\nlogdir = /var/log/puppet\nvardir = /var/lib/puppet\nssldir = /var/lib/puppet/ssl\nrundir = /var/run/puppet\nfactpath = $vardir/lib/facter\n\n[agent]\nserver = puppet\nconfigtimeout = 480\nsplay = true\n# asking puppet to run every 2 hours instead of every 30 minutes to reduce load on the puppet server -ben 2011-08-25\n# trying with 1 hour now Puppet performance is better --mark 2011-11-29\nruninterval = 3600\nprerun_command = /etc/puppet/etckeeper-commit-pre\npostrun_command = /etc/puppet/etckeeper-commit-post\npluginsync = false\nreport = true\n"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "base::puppet",
+          "base",
+          "puppet",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/puppet/puppet.conf.d/10-main.conf",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "base::decommissioned",
+          "base",
+          "decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Base::Decommissioned",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 133,
+        "parameters": {
+          "minute": "37",
+          "user": "root",
+          "ensure": "present",
+          "hour": "2",
+          "command": "/etc/init.d/puppet restart > /dev/null",
+          "require": "File[/etc/default/puppet]"
+        },
+        "type": "Cron",
+        "tags": [
+          "cron",
+          "restartpuppet",
+          "class",
+          "base::puppet",
+          "base",
+          "puppet",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "restartpuppet",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 109,
+        "parameters": {
+          "source": "puppet:///files/misc/puppet.init",
+          "group": "root",
+          "owner": "root",
+          "mode": "0555"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "base::puppet",
+          "base",
+          "puppet",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/init.d/puppet",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv146",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv146",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 191,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "jfsutils",
+          "class",
+          "base::standard-packages",
+          "base",
+          "standard-packages",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "jfsutils",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "knsq14",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "knsq14",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ntp.pp",
+        "line": 47,
+        "parameters": {
+          "freshness": "36000",
+          "ensure": "present",
+          "host": "db1046",
+          "check_command": "check_ntp_time!0.5!1",
+          "description": "NTP",
+          "critical": "false",
+          "retries": "15",
+          "passive": "false"
+        },
+        "type": "Monitor_service",
+        "tags": [
+          "monitor_service",
+          "ntp",
+          "class",
+          "ntp::client",
+          "client",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "ntp",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "exim::packages",
+          "exim",
+          "packages",
+          "exim::simple-mail-sender",
+          "simple-mail-sender",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Exim::Packages",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "knsq6",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "knsq6",
+        "exported": false
+      },
+      {
+        "parameters": {
+          "name": "main"
+        },
+        "type": "Class",
+        "tags": [
+          "class"
+        ],
+        "title": "main",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv150",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv150",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 205,
+        "parameters": {
+          "ensure": "absent"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "mlocate",
+          "class",
+          "base::standard-packages",
+          "base",
+          "standard-packages",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "mlocate",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/exim.pp",
+        "line": 6,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "exim4-daemon-light",
+          "class",
+          "exim::packages",
+          "exim",
+          "packages",
+          "exim::simple-mail-sender",
+          "simple-mail-sender",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "exim4-daemon-light",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ganglia.pp",
+        "line": 127,
+        "parameters": {
+          "notify": "Service[gmond]",
+          "group": "root",
+          "owner": "root",
+          "path": "/etc/ganglia/gmond.conf",
+          "mode": "644",
+          "require": "Package[ganglia-monitor]",
+          "content": "/* This configuration is as close to 2.5.x default behavior as possible\n   The values closely match ./gmond/metric.h definitions in 2.5.x */\nglobals {\n  daemonize = yes\n  setuid = yes\n  user = nobody\n  debug_level = 0\n  max_udp_msg_len = 1472\n  mute = no\n  deaf = yes\n  allow_extra_data = yes\n  host_dmax = 86400 /*secs */\n  cleanup_threshold = 300 /*secs */\n  gexec = no\n  send_metadata_interval = 60\n}\n\n/*\n * The cluster attributes specified will be used as part of the <CLUSTER>\n * tag that will wrap all hosts collected by this instance.\n */\ncluster {\n  name = \"Miscellaneous eqiad\"\n  owner = \"Wikimedia Foundation\"\n  latlong = \"unspecified\"\n  url = \"http://ganglia.wikimedia.org\"\n}\n\n/* The host section describes attributes of the host, like the location */\nhost {\n  location = \"unspecified\"\n}\n\n/* Feel free to specify as many udp_send_channels as you like.  Gmond\n   used to only support having a single channel */\nudp_send_channel {\n  mcast_join = 239.192.1.8\n  port = 8649\n  ttl = 3\n}\n\n/* You can specify as many udp_recv_channels as you like as well. */\nudp_recv_channel {\n  mcast_join = 239.192.1.8\n  port = 8649\n  bind = 239.192.1.8\n}\n\n/* You can specify as many tcp_accept_channels as you like to share\n   an xml description of the state of the cluster */\ntcp_accept_channel {\n  port = 8649\n}\n\n/* Each metrics module that is referenced by gmond must be specified and\n   loaded. If the module has been statically linked with gmond, it does\n   not require a load path. However all dynamically loadable modules must\n   include a load path. */\nmodules {\n  module {\n    name = \"core_metrics\"\n  }\n  module {\n    name = \"cpu_module\"\n    path = \"/usr/lib/ganglia/modcpu.so\"\n  }\n  module {\n    name = \"disk_module\"\n    path = \"/usr/lib/ganglia/moddisk.so\"\n  }\n  module {\n    name = \"load_module\"\n    path = \"/usr/lib/ganglia/modload.so\"\n  }\n  module {\n    name = \"mem_module\"\n    path = \"/usr/lib/ganglia/modmem.so\"\n  }\n  module {\n    name = \"net_module\"\n    path = \"/usr/lib/ganglia/modnet.so\"\n  }\n  module {\n    name = \"proc_module\"\n    path = \"/usr/lib/ganglia/modproc.so\"\n  }\n  module {\n    name = \"sys_module\"\n    path = \"/usr/lib/ganglia/modsys.so\"\n  }\n   module {\n     name = \"python_module\"\n     path = \"/usr/lib/ganglia/modpython.so\"\n     params = \"/usr/lib/ganglia/python_modules\"\n  }\n}\n\ninclude ('/etc/ganglia/conf.d/*.pyconf')\n\n/* The old internal 2.5.x metric array has been replaced by the following\n   collection_group directives.  What follows is the default behavior for\n   collecting and sending metrics that is as close to 2.5.x behavior as\n   possible. */\n\n/* This collection group will cause a heartbeat (or beacon) to be sent every\n   20 seconds.  In the heartbeat is the GMOND_STARTED data which expresses\n   the age of the running gmond. */\ncollection_group {\n  collect_once = yes\n  time_threshold = 20\n  metric {\n    name = \"heartbeat\"\n  }\n}\n\n/* This collection group will send general info about this host every\n   1200 secs.\n   This information doesn't change between reboots and is only collected\n   once. */\ncollection_group {\n  collect_once = yes\n  time_threshold = 1200\n  metric {\n    name = \"cpu_num\"\n    title = \"CPU Count\"\n  }\n  metric {\n    name = \"cpu_speed\"\n    title = \"CPU Speed\"\n  }\n  metric {\n    name = \"mem_total\"\n    title = \"Memory Total\"\n  }\n  /* Should this be here? Swap can be added/removed between reboots. */\n  metric {\n    name = \"swap_total\"\n    title = \"Swap Space Total\"\n  }\n  metric {\n    name = \"boottime\"\n    title = \"Last Boot Time\"\n  }\n  metric {\n    name = \"machine_type\"\n    title = \"Machine Type\"\n  }\n  metric {\n    name = \"os_name\"\n    title = \"Operating System\"\n  }\n  metric {\n    name = \"os_release\"\n    title = \"Operating System Release\"\n  }\n  metric {\n    name = \"location\"\n    title = \"Location\"\n  }\n}\n\n/* This collection group will send the status of gexecd for this host\n   every 300 secs.*/\n/* Unlike 2.5.x the default behavior is to report gexecd OFF. */\ncollection_group {\n  collect_once = yes\n  time_threshold = 300\n  metric {\n    name = \"gexec\"\n    title = \"Gexec Status\"\n  }\n}\n\n/* This collection group will collect the CPU status info every 20 secs.\n   The time threshold is set to 90 seconds.  In honesty, this\n   time_threshold could be set significantly higher to reduce\n   unneccessary  network chatter. */\ncollection_group {\n  collect_every = 20\n  time_threshold = 90\n  /* CPU status */\n  metric {\n    name = \"cpu_user\"\n    value_threshold = \"1.0\"\n    title = \"CPU User\"\n  }\n  metric {\n    name = \"cpu_system\"\n    value_threshold = \"1.0\"\n    title = \"CPU System\"\n  }\n  metric {\n    name = \"cpu_idle\"\n    value_threshold = \"5.0\"\n    title = \"CPU Idle\"\n  }\n  metric {\n    name = \"cpu_nice\"\n    value_threshold = \"1.0\"\n    title = \"CPU Nice\"\n  }\n  metric {\n    name = \"cpu_aidle\"\n    value_threshold = \"5.0\"\n    title = \"CPU aidle\"\n  }\n  metric {\n    name = \"cpu_wio\"\n    value_threshold = \"1.0\"\n    title = \"CPU wio\"\n  }\n  /* The next two metrics are optional if you want more detail...\n     ... since they are accounted for in cpu_system.\n  metric {\n    name = \"cpu_intr\"\n    value_threshold = \"1.0\"\n    title = \"CPU intr\"\n  }\n  metric {\n    name = \"cpu_sintr\"\n    value_threshold = \"1.0\"\n    title = \"CPU sintr\"\n  }\n  */\n}\n\ncollection_group {\n  collect_every = 20\n  time_threshold = 90\n  /* Load Averages */\n  metric {\n    name = \"load_one\"\n    value_threshold = \"1.0\"\n    title = \"One Minute Load Average\"\n  }\n  metric {\n    name = \"load_five\"\n    value_threshold = \"1.0\"\n    title = \"Five Minute Load Average\"\n  }\n  metric {\n    name = \"load_fifteen\"\n    value_threshold = \"1.0\"\n    title = \"Fifteen Minute Load Average\"\n  }\n}\n\n/* This group collects the number of running and total processes */\ncollection_group {\n  collect_every = 80\n  time_threshold = 950\n  metric {\n    name = \"proc_run\"\n    value_threshold = \"1.0\"\n    title = \"Total Running Processes\"\n  }\n  metric {\n    name = \"proc_total\"\n    value_threshold = \"1.0\"\n    title = \"Total Processes\"\n  }\n}\n\n/* This collection group grabs the volatile memory metrics every 40 secs and\n   sends them at least every 180 secs.  This time_threshold can be increased\n   significantly to reduce unneeded network traffic. */\ncollection_group {\n  collect_every = 40\n  time_threshold = 180\n  metric {\n    name = \"mem_free\"\n    value_threshold = \"1024.0\"\n    title = \"Free Memory\"\n  }\n  metric {\n    name = \"mem_shared\"\n    value_threshold = \"1024.0\"\n    title = \"Shared Memory\"\n  }\n  metric {\n    name = \"mem_buffers\"\n    value_threshold = \"1024.0\"\n    title = \"Memory Buffers\"\n  }\n  metric {\n    name = \"mem_cached\"\n    value_threshold = \"1024.0\"\n    title = \"Cached Memory\"\n  }\n  metric {\n    name = \"swap_free\"\n    value_threshold = \"1024.0\"\n    title = \"Free Swap Space\"\n  }\n}\n\ncollection_group {\n  collect_every = 40\n  time_threshold = 300\n  metric {\n    name = \"bytes_out\"\n    value_threshold = 4096\n    title = \"Bytes Sent\"\n  }\n  metric {\n    name = \"bytes_in\"\n    value_threshold = 4096\n    title = \"Bytes Received\"\n  }\n  metric {\n    name = \"pkts_in\"\n    value_threshold = 256\n    title = \"Packets Received\"\n  }\n  metric {\n    name = \"pkts_out\"\n    value_threshold = 256\n    title = \"Packets Sent\"\n  }\n}\n\n/* Different than 2.5.x default since the old config made no sense */\ncollection_group {\n  collect_every = 1800\n  time_threshold = 3600\n  metric {\n    name = \"disk_total\"\n    value_threshold = 1.0\n    title = \"Total Disk Space\"\n  }\n}\n\ncollection_group {\n  collect_every = 40\n  time_threshold = 180\n  metric {\n    name = \"disk_free\"\n    value_threshold = 1.0\n    title = \"Disk Space Available\"\n  }\n  metric {\n    name = \"part_max_used\"\n    value_threshold = 1.0\n    title = \"Maximum Disk Space Used\"\n  }\n}\n/* Version 1.3 for gmond_3.1.2 */\n"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "gmondconfig",
+          "class",
+          "ganglia",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "gmondconfig",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv177",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv177",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv149",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv149",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "knsq4",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "knsq4",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv166",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv166",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "knsq7",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "knsq7",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "knsq5",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "knsq5",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv151",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv151",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv145",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv145",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "db2",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "db2",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "exim::service",
+          "exim",
+          "service",
+          "exim::simple-mail-sender",
+          "simple-mail-sender",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Exim::Service",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv108",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv108",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv113",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv113",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv97",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv97",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv183",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv183",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv152",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv152",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv160",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv160",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "db1",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "db1",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 172,
+        "parameters": {
+          "refreshonly": true,
+          "path": "/bin:/sbin:/usr/bin:/usr/sbin"
+        },
+        "type": "Exec",
+        "tags": [
+          "exec",
+          "class",
+          "base::sysctl",
+          "base",
+          "sysctl",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/sbin/start procps",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 220,
+        "parameters": {
+          "group": "root",
+          "owner": "root",
+          "mode": "0644",
+          "content": "# This file is managed by Puppet!\n# Resolver configuration for site eqiad\nsearch pdl.cmu.local\noptions timeout:3\nnameserver 208.80.152.131\nnameserver 208.80.152.132\n"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "base::resolving",
+          "base",
+          "resolving",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/resolv.conf",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ssh.pp",
+        "line": 16,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "openssh-client",
+          "class",
+          "ssh::client",
+          "ssh",
+          "client",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "openssh-client",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv94",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv94",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv114",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv114",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv170",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv170",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv125",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv125",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "mobile4",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "mobile4",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv174",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv174",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv165",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv165",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 133,
+        "parameters": {
+          "minute": "43",
+          "user": "root",
+          "ensure": "present",
+          "command": "[ -f /var/lib/puppet/state/puppetdlock ] && find /var/lib/puppet/state/puppetdlock -ctime +1 -delete",
+          "require": "Package[puppet]"
+        },
+        "type": "Cron",
+        "tags": [
+          "cron",
+          "remove-old-lockfile",
+          "class",
+          "base::puppet",
+          "base",
+          "puppet",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "remove-old-lockfile",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv186",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv186",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 56,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "apt-show-versions",
+          "class",
+          "base::apt",
+          "base",
+          "apt",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "apt-show-versions",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv153",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv153",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "base::apt",
+          "base",
+          "apt",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Base::Apt",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv106",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv106",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv95",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv95",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 17,
+        "parameters": {
+          "timeout": "240",
+          "returns": [
+            "0",
+            "100"
+          ]
+        },
+        "type": "Exec",
+        "tags": [
+          "exec",
+          "class",
+          "base::apt::update",
+          "base",
+          "apt",
+          "update"
+        ],
+        "title": "/usr/bin/apt-get update",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv104",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv104",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "lomaria",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "lomaria",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "adler",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "adler",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 234,
+        "parameters": {
+          "freshness": "36000",
+          "ensure": "present",
+          "host": "db1046",
+          "check_command": "check_ssh",
+          "description": "SSH",
+          "retries": "3",
+          "critical": "false",
+          "passive": "false"
+        },
+        "type": "Monitor_service",
+        "tags": [
+          "monitor_service",
+          "ssh",
+          "class",
+          "base::monitoring::host",
+          "base",
+          "monitoring",
+          "host",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "ssh",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "base::remote-syslog",
+          "base",
+          "remote-syslog",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Base::Remote-syslog",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 70,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "snmp",
+          "class",
+          "base::puppet",
+          "base",
+          "puppet",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "snmp",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "base::sysctl",
+          "base",
+          "sysctl",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Base::Sysctl",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/exim.pp",
+        "line": 22,
+        "parameters": {
+          "group": "root",
+          "owner": "root",
+          "mode": "0444",
+          "content": "# /etc/default/exim4\n#####################################################################\n### THIS FILE IS MANAGED BY PUPPET \n### puppet:///files/exim/exim4.default\n#####################################################################\n\nEX4DEF_VERSION=''\n\n# 'combined' -   one daemon running queue and listening on SMTP port\n# 'no'       -   no daemon running the queue\n# 'separate' -   two separate daemons\n# 'ppp'      -   only run queue with /etc/ppp/ip-up.d/exim4.\n# 'nodaemon' - no daemon is started at all.\n# 'queueonly' - only a queue running daemon is started, no SMTP listener.\n# setting this to 'no' will also disable queueruns from /etc/ppp/ip-up.d/exim4\nQUEUERUNNER='queueonly'\n# how often should we run the queue\nQUEUEINTERVAL='10m'\n# options common to quez-runner and listening daemon\nCOMMONOPTIONS=''\n# more options for the daemon/process running the queue (applies to the one\n# started in /etc/ppp/ip-up.d/exim4, too.\nQUEUERUNNEROPTIONS=''\n# special flags given to exim directly after the -q. See exim(8)\nQFLAGS=''\n# options for daemon listening on port 25\nSMTPLISTENEROPTIONS=''\n"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "exim::packages",
+          "exim",
+          "packages",
+          "exim::simple-mail-sender",
+          "simple-mail-sender",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/default/exim4",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv169",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv169",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "base::motd",
+          "base",
+          "motd",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Base::Motd",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv162",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv162",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 42,
+        "parameters": {
+          "require": "Exec[sed-wikimedia-repository]",
+          "content": "## Wikimedia APT repository\ndeb http://apt.wikimedia.org/wikimedia precise-wikimedia main universe\ndeb-src http://apt.wikimedia.org/wikimedia precise-wikimedia main universe\n"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "base::apt",
+          "base",
+          "apt",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/apt/sources.list.d/wikimedia.list",
+        "exported": false
+      },
+      {
+        "parameters": {
+          "name": "main"
+        },
+        "type": "Stage",
+        "tags": [
+          "stage"
+        ],
+        "title": "main",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 109,
+        "parameters": {
+          "notify": "Exec[compile puppet.conf]",
+          "group": "root",
+          "ensure": "file",
+          "owner": "root",
+          "mode": "0444"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "base::puppet",
+          "base",
+          "puppet",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/puppet/puppet.conf",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv86",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv86",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "mobile5",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "mobile5",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv129",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv129",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv99",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv99",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv184",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv184",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv120",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv120",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv136",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv136",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ganglia.pp",
+        "line": 153,
+        "parameters": {
+          "ensure": "directory",
+          "require": "Package[ganglia-monitor]"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "ganglia",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/ganglia/conf.d",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv118",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv118",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 191,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "wikimedia-raid-utils",
+          "class",
+          "base::standard-packages",
+          "base",
+          "standard-packages",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "wikimedia-raid-utils",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv161",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv161",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ssh.pp",
+        "line": 88,
+        "parameters": {
+          "ensure": "running",
+          "subscribe": "File[/etc/ssh/sshd_config]"
+        },
+        "type": "Service",
+        "tags": [
+          "service",
+          "ssh",
+          "class",
+          "ssh::daemon",
+          "daemon",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "ssh",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv111",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv111",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "eiximenis",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "eiximenis",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 148,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "rsyslog",
+          "class",
+          "base::remote-syslog",
+          "base",
+          "remote-syslog",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "rsyslog",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "passwords::openstack::nova",
+          "passwords",
+          "openstack",
+          "nova",
+          "openstack::nova_config",
+          "nova_config",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Passwords::Openstack::Nova",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "db3",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "db3",
+        "exported": false
+      },
+      {
+        "parameters": {
+          "require": "Class[Exim::Packages]"
+        },
+        "type": "Class",
+        "tags": [
+          "class",
+          "exim::simple-mail-sender",
+          "exim",
+          "simple-mail-sender",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Exim::Simple-mail-sender",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Base",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv130",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv130",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/exim.pp",
+        "line": 67,
+        "parameters": {
+          "source": "puppet:///files/exim/exim4.minimal.conf",
+          "group": "root",
+          "owner": "root",
+          "mode": "0444",
+          "require": "Package[exim4-config]"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "exim::simple-mail-sender",
+          "exim",
+          "simple-mail-sender",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/exim4/exim4.conf",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "ssh",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Ssh",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv176",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv176",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv131",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv131",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv112",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv112",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv179",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv179",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "settings"
+        ],
+        "title": "Settings",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ntp.pp",
+        "line": 22,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "ntp",
+          "class",
+          "ntp::client",
+          "client",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "ntp",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ganglia.pp",
+        "line": 153,
+        "parameters": {
+          "ensure": "directory",
+          "require": "Package[ganglia-monitor]"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "ganglia",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/usr/lib/ganglia/python_modules",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 109,
+        "parameters": {
+          "group": "root",
+          "ensure": "directory",
+          "owner": "root",
+          "path": "/etc/puppet/puppet.conf.d",
+          "mode": "0550"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "base::puppet",
+          "base",
+          "puppet",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/puppet/puppet.conf.d/",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ntp.pp",
+        "line": 28,
+        "parameters": {
+          "ensure": "running",
+          "subscribe": "File[ntp.conf]",
+          "require": [
+            "File[ntp.conf]",
+            "Package[ntp]"
+          ]
+        },
+        "type": "Service",
+        "tags": [
+          "service",
+          "ntp",
+          "class",
+          "ntp::client",
+          "client",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "ntp",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv107",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv107",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 109,
+        "parameters": {
+          "source": "puppet:///files/puppet/puppet.default",
+          "group": "root",
+          "owner": "root",
+          "mode": "0444"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "base::puppet",
+          "base",
+          "puppet",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/default/puppet",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 191,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "wikimedia-base",
+          "class",
+          "base::standard-packages",
+          "base",
+          "standard-packages",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "wikimedia-base",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv96",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv96",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv168",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv168",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv91",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv91",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "knsq1",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "knsq1",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv147",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv147",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "ssh::daemon",
+          "ssh",
+          "daemon",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Ssh::Daemon",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv157",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv157",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "knsq3",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "knsq3",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv126",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv126",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv182",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv182",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv148",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv148",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 191,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "zsh-beta",
+          "class",
+          "base::standard-packages",
+          "base",
+          "standard-packages",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "zsh-beta",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv158",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv158",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv92",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv92",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "ssh::client",
+          "ssh",
+          "client",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Ssh::Client",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "ntp::client",
+          "ntp",
+          "client",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Ntp::Client",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ntp.pp",
+        "line": 13,
+        "parameters": {
+          "group": "root",
+          "owner": "root",
+          "path": "/etc/ntp.conf",
+          "mode": "644",
+          "content": "# Wikimedia ntp client configuration\n\ndriftfile /var/lib/ntp/ntp.drift\n\n# By default ignore any packets we receive\nrestrict default ignore\n\n# Enable this if you want statistics to be logged.\n#statsdir /var/log/ntpstats/\n\nstatistics loopstats peerstats clockstats\nfilegen loopstats file loopstats type day enable\nfilegen peerstats file peerstats type day enable\nfilegen clockstats file clockstats type day enable\n\n# Specify servers explicitly for access control, as the \"pool\" keyword is not\n# yet supported by this version of ntpd\n\nrestrict linne.wikimedia.org kod notrap noquery\nserver linne.wikimedia.org\n\nrestrict dobson.wikimedia.org kod notrap noquery\nserver dobson.wikimedia.org\n\n\n# Access control configuration; see /usr/share/doc/ntp-doc/html/accopt.html for\n# details.  The web page <http://support.ntp.org/bin/view/Support/AccessRestrictions>\n# might also be helpful.\n#\n# Note that \"restrict\" applies to both servers and clients, so a configuration\n# that might be intended to block requests from certain clients could also end\n# up blocking replies from your own upstream servers.\n\n# Local users may interrogate the ntp server more closely.\nrestrict 127.0.0.1\nrestrict ::1\n\n# Allow the monitoring server to query us\nrestrict 208.80.152.161 mask 255.255.255.255 kod notrap nomodify nopeer\n\n# If you want to provide time to your local subnet, change the next line.\n# (Again, the address is an example only.)\n#broadcast 192.168.123.255\n\n# If you want to listen to time broadcasts on your local subnet, de-comment the\n# next lines.  Please do this only if you trust everybody on the network!\n#disable auth\n#broadcastclient\n"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "ntp.conf",
+          "class",
+          "ntp",
+          "ntp::client",
+          "client",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "ntp.conf",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ganglia.pp",
+        "line": 169,
+        "parameters": {
+          "pattern": "gmond",
+          "ensure": "running",
+          "hasstatus": false,
+          "subscribe": "File[gmondconfig]",
+          "name": "ganglia-monitor",
+          "require": [
+            "File[gmondconfig]",
+            "Package[gmond-package]"
+          ]
+        },
+        "type": "Service",
+        "tags": [
+          "service",
+          "gmond",
+          "class",
+          "ganglia",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "gmond",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "base::standard-packages",
+          "base",
+          "standard-packages",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Base::Standard-packages",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/generic-definitions.pp",
+        "line": 31,
+        "parameters": {
+          "ensure": "present"
+        },
+        "type": "Group",
+        "tags": [
+          "group",
+          "gmetric",
+          "systemuser",
+          "class",
+          "ganglia",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "gmetric",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 157,
+        "parameters": {
+          "group": "root",
+          "ensure": "present",
+          "owner": "root",
+          "mode": "0644",
+          "require": "Package[rsyslog]",
+          "content": "*.info;mail.none;authpriv.none;cron.none\t@syslog.eqiad.wmnet\n"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "base::remote-syslog",
+          "base",
+          "remote-syslog",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/rsyslog.d/90-remote-syslog.conf",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 30,
+        "parameters": {
+          "group": "root",
+          "ensure": "present",
+          "owner": "root",
+          "mode": "0644",
+          "content": "Acquire::http::Proxy::security.ubuntu.com \"http://brewster.wikimedia.org:8080\";"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "base::apt",
+          "base",
+          "apt",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/apt/apt.conf.d/80wikimedia-proxy",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv140",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv140",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "knsq2",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "knsq2",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "db7",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "db7",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv90",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv90",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 79,
+        "parameters": {
+          "command": "snmptrap -v 1 -c public nagios.wikimedia.org .1.3.6.1.4.1.33298 `hostname` 6 1004 `uptime | awk '{ split($3,a,\":\"); print (a[1]*60+a[2])*60 }'`",
+          "require": "Package[snmp]",
+          "path": "/bin:/usr/bin"
+        },
+        "type": "Exec",
+        "tags": [
+          "exec",
+          "class",
+          "base::puppet",
+          "base",
+          "puppet",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "puppet snmp trap",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "base::resolving",
+          "base",
+          "resolving",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Base::Resolving",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv124",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv124",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "sq47",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "sq47",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 73,
+        "parameters": {
+          "freshness": "36000",
+          "ensure": "present",
+          "host": "db1046",
+          "check_command": "puppet-FAIL",
+          "description": "Puppet freshness",
+          "critical": "false",
+          "retries": "1",
+          "passive": "true"
+        },
+        "type": "Monitor_service",
+        "tags": [
+          "monitor_service",
+          "class",
+          "base::puppet",
+          "base",
+          "puppet",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "db1046 puppet freshness",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv139",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv139",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 163,
+        "parameters": {
+          "ensure": "running",
+          "subscribe": "File[/etc/rsyslog.d/90-remote-syslog.conf]",
+          "require": "Package[rsyslog]"
+        },
+        "type": "Service",
+        "tags": [
+          "service",
+          "rsyslog",
+          "class",
+          "base::remote-syslog",
+          "base",
+          "remote-syslog",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "rsyslog",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv102",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv102",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 65,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "puppet",
+          "class",
+          "base::puppet",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "puppet",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv163",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv163",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv93",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv93",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/generic-definitions.pp",
+        "line": 42,
+        "parameters": {
+          "shell": "/bin/sh",
+          "home": "/home/gmetric",
+          "ensure": "present",
+          "gid": "gmetric",
+          "managehome": true,
+          "require": "Group[gmetric]"
+        },
+        "type": "User",
+        "tags": [
+          "user",
+          "gmetric",
+          "systemuser",
+          "class",
+          "ganglia",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "gmetric",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "ganglia",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Ganglia",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/exim.pp",
+        "line": 6,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "exim4-config",
+          "class",
+          "exim::packages",
+          "exim",
+          "packages",
+          "exim::simple-mail-sender",
+          "simple-mail-sender",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "exim4-config",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv181",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv181",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "ntp",
+          "ntp::client",
+          "client",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Ntp",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv154",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv154",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 199,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "lldpd",
+          "class",
+          "base::standard-packages",
+          "base",
+          "standard-packages",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "lldpd",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv144",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv144",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv127",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv127",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "ssh::hostkeys::publish",
+          "ssh",
+          "hostkeys",
+          "publish",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Ssh::Hostkeys::Publish",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 116,
+        "parameters": {
+          "refreshonly": true,
+          "command": "cat /etc/puppet/puppet.conf.d/??-*.conf > /etc/puppet/puppet.conf",
+          "path": "/usr/bin:/bin"
+        },
+        "type": "Exec",
+        "tags": [
+          "exec",
+          "class",
+          "base::puppet",
+          "base",
+          "puppet",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "compile puppet.conf",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ssh.pp",
+        "line": 82,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "openssh-server",
+          "class",
+          "ssh::daemon",
+          "ssh",
+          "daemon",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "openssh-server",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ssh.pp",
+        "line": 74,
+        "parameters": {
+          "group": "root",
+          "owner": "root",
+          "mode": "0444",
+          "content": "# This file is managed by puppet!\n# Package generated configuration file\n# See the sshd(8) manpage for details\n\n# What ports, IPs and protocols we listen for\nPort 22\n# Use these options to restrict which interfaces/protocols sshd will bind to\n#ListenAddress ::\n#ListenAddress 0.0.0.0\nProtocol 2\n# HostKeys for protocol version 2\nHostKey /etc/ssh/ssh_host_rsa_key\nHostKey /etc/ssh/ssh_host_dsa_key\n#Privilege Separation is turned on for security\nUsePrivilegeSeparation yes\n\n# Lifetime and size of ephemeral version 1 server key\nKeyRegenerationInterval 3600\nServerKeyBits 768\n\n# Logging\nSyslogFacility AUTH\nLogLevel INFO\n\n# Authentication:\nLoginGraceTime 120\nPermitRootLogin yes\nStrictModes yes\n\nRSAAuthentication yes\nPubkeyAuthentication yes\n#AuthorizedKeysFile\t%h/.ssh/authorized_keys\n\n# Don't read the user's ~/.rhosts and ~/.shosts files\nIgnoreRhosts yes\n# For this to work you will also need host keys in /etc/ssh_known_hosts\nRhostsRSAAuthentication no\n# similar for protocol version 2\nHostbasedAuthentication no\n# Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication\n#IgnoreUserKnownHosts yes\n\n# To enable empty passwords, change to yes (NOT RECOMMENDED)\nPermitEmptyPasswords no\n\n# Change to yes to enable challenge-response passwords (beware issues with\n# some PAM modules and threads)\nChallengeResponseAuthentication no\n\n# Globally deny logon via password, only allow SSH-key login.  \nPasswordAuthentication no  \n\n# Kerberos options\n#KerberosAuthentication no\n#KerberosGetAFSToken no\n#KerberosOrLocalPasswd yes\n#KerberosTicketCleanup yes\n\n# GSSAPI options\n#GSSAPIAuthentication no\n#GSSAPICleanupCredentials yes\n\nX11DisplayOffset 10\nPrintMotd no\nPrintLastLog yes\nTCPKeepAlive yes\n#UseLogin no\n\n\n\n\n\n#MaxStartups 10:30:60\n#Banner /etc/issue.net\n\n# Allow client to pass locale environment variables\nAcceptEnv LANG LC_*\n\nSubsystem sftp /usr/lib/openssh/sftp-server\n\nUsePAM yes\n\n# allow connections from the LAN to use passwords.  \nMatch Address 208.80.152.*,91.198.174.0/24,10.*\n        PasswordAuthentication yes\n"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "ssh::config",
+          "ssh",
+          "config",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/ssh/sshd_config",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv185",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv185",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv100",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv100",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "project1",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "project1",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "passwords::puppet::database",
+          "passwords",
+          "puppet",
+          "database",
+          "base::puppet",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Passwords::Puppet::Database",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv109",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv109",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv159",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv159",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv143",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv143",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Standard",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ssh.pp",
+        "line": 9,
+        "type": "Class",
+        "tags": [
+          "class",
+          "ssh::hostkeys::collect",
+          "ssh",
+          "hostkeys",
+          "collect",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Ssh::Hostkeys::Collect",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "base::vimconfig",
+          "base",
+          "vimconfig",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Base::Vimconfig",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv87",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv87",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv128",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv128",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/stages.pp",
+        "line": 8,
+        "parameters": {
+          "stage": "first"
+        },
+        "type": "Class",
+        "tags": [
+          "class",
+          "base::apt::update",
+          "base",
+          "apt",
+          "update"
+        ],
+        "title": "Base::Apt::Update",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv119",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv119",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 191,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "screen",
+          "class",
+          "base::standard-packages",
+          "base",
+          "standard-packages",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "screen",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 140,
+        "parameters": {
+          "source": "puppet:///files/misc/97-last-puppet-run",
+          "mode": "0555"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "base::puppet",
+          "base",
+          "puppet",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/update-motd.d/97-last-puppet-run",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "ssh::config",
+          "ssh",
+          "config",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Ssh::Config",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv178",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv178",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "yongle",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "yongle",
+        "exported": false
+      },
+      {
+        "type": "Node",
+        "tags": [
+          "node",
+          "default",
+          "class"
+        ],
+        "title": "default",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 191,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "tzdata",
+          "class",
+          "base::standard-packages",
+          "base",
+          "standard-packages",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "tzdata",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 233,
+        "parameters": {
+          "ensure": "present",
+          "critical": "false",
+          "ip_address": "172.19.157.156"
+        },
+        "type": "Monitor_host",
+        "tags": [
+          "monitor_host",
+          "db1046",
+          "class",
+          "base::monitoring::host",
+          "base",
+          "monitoring",
+          "host",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "db1046",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ganglia.pp",
+        "line": 148,
+        "parameters": {
+          "ensure": "absent",
+          "before": "Package[ganglia-monitor]"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "gmond",
+          "class",
+          "ganglia",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "gmond",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv171",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv171",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "knsq13",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "knsq13",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv116",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv116",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv156",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv156",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 311,
+        "parameters": {
+          "server": "puppet"
+        },
+        "type": "Class",
+        "tags": [
+          "class",
+          "base::puppet",
+          "base",
+          "puppet",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Base::Puppet",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 191,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "xfsprogs",
+          "class",
+          "base::standard-packages",
+          "base",
+          "standard-packages",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "xfsprogs",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "base::monitoring::host",
+          "base",
+          "monitoring",
+          "host",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Base::Monitoring::Host",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv135",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv135",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv142",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv142",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv89",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv89",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "sq32",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "sq32",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv172",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv172",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "ixia",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "ixia",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "mobile3",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "mobile3",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv101",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv101",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv117",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv117",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ganglia.pp",
+        "line": 171,
+        "parameters": {
+          "shell": "/bin/sh",
+          "home": "/home/gmetric"
+        },
+        "type": "Systemuser",
+        "tags": [
+          "systemuser",
+          "gmetric",
+          "class",
+          "ganglia",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "gmetric",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/stages.pp",
+        "line": 2,
+        "parameters": {
+          "require": "Stage[main]"
+        },
+        "type": "Stage",
+        "tags": [
+          "stage",
+          "last",
+          "class"
+        ],
+        "title": "last",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ganglia.pp",
+        "line": 157,
+        "parameters": {
+          "ensure": "absent"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "ganglia",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/gmond.conf",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/ganglia.pp",
+        "line": 148,
+        "parameters": {
+          "ensure": "latest",
+          "alias": "gmond-package"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "ganglia-monitor",
+          "class",
+          "ganglia",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "ganglia-monitor",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv138",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv138",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "transcode2",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "transcode2",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 51,
+        "parameters": {
+          "creates": "/etc/apt/sources.list.d/wikimedia.list",
+          "command": "sed -i '/deb.*apt\\.wikimedia\\.org.*-wikimedia main/s/^deb/#deb/g' /etc/apt/sources.list",
+          "path": "/bin:/sbin:/usr/bin:/usr/sbin"
+        },
+        "type": "Exec",
+        "tags": [
+          "exec",
+          "sed-wikimedia-repository",
+          "class",
+          "base::apt",
+          "base",
+          "apt",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "sed-wikimedia-repository",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/stages.pp",
+        "line": 1,
+        "parameters": {
+          "before": "Stage[main]"
+        },
+        "type": "Stage",
+        "tags": [
+          "stage",
+          "first",
+          "class"
+        ],
+        "title": "first",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 191,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "gdb",
+          "class",
+          "base::standard-packages",
+          "base",
+          "standard-packages",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "gdb",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv132",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv132",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 228,
+        "parameters": {
+          "ensure": "absent"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "base::motd",
+          "base",
+          "motd",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/update-motd.d/10-help-text",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "controller",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "controller",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv133",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv133",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 191,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "wipe",
+          "class",
+          "base::standard-packages",
+          "base",
+          "standard-packages",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "wipe",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 294,
+        "parameters": {
+          "source": "puppet:///files/misc/vimrc.local",
+          "group": "root",
+          "ensure": "present",
+          "owner": "root",
+          "mode": "0644"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "class",
+          "base::vimconfig",
+          "base",
+          "vimconfig",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "/etc/vim/vimrc.local",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv134",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv134",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/stages.pp",
+        "line": 8,
+        "parameters": {
+          "stage": "last"
+        },
+        "type": "Class",
+        "tags": [
+          "class",
+          "ldap::client::instance-finish",
+          "ldap",
+          "client",
+          "instance-finish"
+        ],
+        "title": "Ldap::Client::Instance-finish",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv164",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv164",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 181,
+        "parameters": {
+          "notify": "Exec[/sbin/start procps]",
+          "source": "puppet:///files/misc/50-wikimedia-base.conf.sysctl",
+          "group": "root",
+          "owner": "root",
+          "path": "/etc/sysctl.d/50-wikimedia-base.conf",
+          "mode": "644"
+        },
+        "type": "File",
+        "tags": [
+          "file",
+          "wikimedia-base-sysctl",
+          "class",
+          "base::sysctl",
+          "base",
+          "sysctl",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "wikimedia-base-sysctl",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv88",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv88",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv103",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv103",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 191,
+        "parameters": {
+          "ensure": "latest"
+        },
+        "type": "Package",
+        "tags": [
+          "package",
+          "iperf",
+          "class",
+          "base::standard-packages",
+          "base",
+          "standard-packages",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "iperf",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv173",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv173",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/stages.pp",
+        "line": 8,
+        "parameters": {
+          "stage": "last"
+        },
+        "type": "Class",
+        "tags": [
+          "class",
+          "base::instance-finish",
+          "base",
+          "instance-finish"
+        ],
+        "title": "Base::Instance-finish",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv141",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv141",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "searchidx1",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "searchidx1",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "openstack::nova_config",
+          "openstack",
+          "nova_config",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Openstack::Nova_config",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv105",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv105",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv137",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv137",
+        "exported": false
+      },
+      {
+        "type": "Class",
+        "tags": [
+          "class",
+          "passwords::root",
+          "passwords",
+          "root",
+          "base",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "Passwords::Root",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "srv175",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "srv175",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "db20",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "db20",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/base.pp",
+        "line": 260,
+        "type": "Base::Decommissioned::Decommissioned_host_role",
+        "tags": [
+          "base::decommissioned::decommissioned_host_role",
+          "base",
+          "decommissioned",
+          "decommissioned_host_role",
+          "db4",
+          "class",
+          "base::decommissioned",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "db4",
+        "exported": false
+      },
+      {
+        "file": "/var/wikimedia/operations-puppet/manifests/exim.pp",
+        "line": 52,
+        "parameters": {
+          "ensure": "running",
+          "subscribe": [
+            "File[/etc/default/exim4]",
+            "File[/etc/exim4/exim4.conf]"
+          ],
+          "require": [
+            "File[/etc/default/exim4]",
+            "File[/etc/exim4/exim4.conf]",
+            "Package[exim4-daemon-light]"
+          ]
+        },
+        "type": "Service",
+        "tags": [
+          "service",
+          "exim4",
+          "class",
+          "exim::service",
+          "exim",
+          "exim::simple-mail-sender",
+          "simple-mail-sender",
+          "standard",
+          "node",
+          "default"
+        ],
+        "title": "exim4",
+        "exported": false
+      }
+    ],
+    "name": "db1046"
+  },
+  "metadata": {
+    "api_version": 1
+  }
+}

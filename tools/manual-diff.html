@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+Manual checks to make sure we are indeed diffing catalogs properly
+
+<body>
+
+<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+
+<script>
+
+function getSize(obj) {
+	var count = 0;
+	for (el in obj) {
+		if (obj.hasOwnProperty(el)) {
+			++count;
+		}
+	}
+	return count;
+}
+
+/**
+ * Return elements added/changed/removed from d1
+ */
+function diffDict(d1, d2) {
+	removed = {};
+	changed = {};
+
+	$.each(d1, function(k, v) {
+		if (k in d2) {
+			//possibly descend
+			var changed = false;
+			if (typeof(d1[k]) != typeof(d2[k])) {
+				changed[k] = d2[k];
+			} else {
+				if (typeof(d1[k]) === "object") {
+					var subdiff = diffDict(d1[k], d2[k]);
+					if (getDiffSize(subdiff) == 0) {
+						delete d2[k];
+					} else {
+						changed[k] = subdiff; 
+					}
+				} else {
+					if (d1[k] === d2[k]) {
+						delete d2[k];
+					}
+					changed[k] = d2[k];
+				}
+			}
+		} else {
+			removed[k] = v;
+		}
+	});
+
+	return {
+		this_is_a_diff: true,
+		added: d2,
+		removed: removed,
+		changed: changed
+	};
+}
+
+function getDiffSize(diff) {
+	return getSize(diff.added) + getSize(diff.removed) + getSize(diff.changed); 
+}
+
+function tabs(n) {
+	var s = "";
+	for (var i = 0; i < n; ++i) {
+		s += "  ";
+	}
+	return s;
+}
+
+/**
+ * Format a diff
+ */
+function printDiff(diff, logger, tablevel) {
+	if (!logger) {
+		logger = function() {
+			console.log.apply(console, arguments);
+		}
+	}
+	if (!tablevel) {
+		tablevel = 0;
+	}
+
+	$.each(diff, function(k, v) {
+		if (getSize(v) != 0) {
+			logger(tabs(tablevel) + k + ":");
+			$.each(v, function(k, v) {
+				if (v.this_is_a_diff) {
+					logger(tabs(tablevel) + k + " diff:");
+					printDiff(v, logger, tablevel+1);
+				} else {
+					logger(tabs(tablevel) + k + " = " + v);
+				}
+				
+			});
+		}
+	});
+}
+
+function dodiff(js1, js2, logger) {
+	if (!logger) {
+		logger = function() {
+			console.log.apply(console, arguments);
+		}
+	}
+
+	var toEdgeMap = function(edges) {
+		var es = {};
+		$.each(edges, function(dx, el) {
+			es[el.source + "->" + el.target] = true;
+		});
+		return es;
+	};
+
+	var em1 = toEdgeMap(js1.data.edges);
+	var em2 = toEdgeMap(js2.data.edges);
+	var ediff = diffDict(em1, em2);
+	logger("Edge diff:");
+	printDiff(ediff, logger);
+
+	var toResourceMap = function(reses) {
+		var rs = {};
+		$.each(reses, function(dx, el) {
+			delete el["tags"];
+			delete el["line"];
+			rs[el["title"] + "--" + el["type"] + "--" + el["file"]] = el;
+		});
+		return rs;
+	};
+
+	var rm1 = toResourceMap(js1.data.resources);
+	var rm2 = toResourceMap(js2.data.resources);
+
+	var rdiff = diffDict(rm1, rm2);
+
+	logger("Resource diff:");
+	printDiff(rdiff);
+}
+
+$(document).ready(function() {
+	//some sample diffs
+	var fn1 = "bad1/1356104442-9dac3d8230ebb2aa47b8616d5922e12ba612dcc8.json";
+	var fn2 = "bad1/1356110250-2b205d24ff3b7a96ee02762f7e21b939eca4d76e.json";
+	fn1 = "bad2/1322570501-e63672a80741440750229e861f68485719336443.json";
+	fn2 = "bad2/1322572946-79130838179ea29af069c94b16d453df30a310cd.json";
+	$.getJSON(fn1, function(js1) {
+		$.getJSON(fn2, function(js2) {
+			dodiff(js1, js2);
+		});
+	});
+});
+
+</script>
+
+</body>
+
+</html>
