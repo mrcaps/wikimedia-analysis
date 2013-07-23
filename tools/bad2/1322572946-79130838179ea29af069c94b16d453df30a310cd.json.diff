@@ -1,0 +1,9 @@
+{"key": "resources", "op": "descend"}
+{"key": "/etc/puppet/puppet.conf.d/10-main.conf", "op": "descend"}
+{"key": "parameters", "op": "descend"}
+{"key": "content", "op": "descend"}
+{"value": "# This file is managed by Puppet!\n\n[main]\nlogdir = /var/log/puppet\nvardir = /var/lib/puppet\nssldir = /var/lib/puppet/ssl\nrundir = /var/run/puppet\nfactpath = $vardir/lib/facter\n\n[agent]\nserver = puppet\nconfigtimeout = 480\nsplay = true\n# asking puppet to run every 2 hours instead of every 30 minutes to reduce load on the puppet server -ben 2011-08-25\n# trying with 1 hour now Puppet performance is better --mark 2011-11-29\nruninterval = 3600\nprerun_command = /etc/puppet/etckeeper-commit-pre\npostrun_command = /etc/puppet/etckeeper-commit-post\npluginsync = false\nreport = true\n", "op": "swap"}
+{"op": "ascend"}
+{"op": "ascend"}
+{"op": "ascend"}
+{"op": "ascend"}
