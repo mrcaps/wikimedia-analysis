@@ -270,6 +270,16 @@ class Differ(object):
 		for node in nodes:
 			self.__cmp_region(torun, node, 0, len(torun)-1)
 
+			#now, we might have spurious diffs from the "edges" of the bisections
+			# remove all diffs, then compute from the commits we compiled.
+			nodepath = self.get_out_path(node)
+			for fn in os.listdir(nodepath):
+				if fn.endswith(".diff"):
+					os.remove(os.path.join(nodepath, fn))
+
+		#recompute all diffs.
+		self.compute_diffs(nodes)
+
 	def __cmp_region(self, commits, node, lodx, hidx):
 		log.info("__cmp_region from %d to %d" % (lodx, hidx))
 		locom_path = self.get_compiled(commits[lodx], node)
@@ -507,11 +517,14 @@ def real_run():
 	#	"all-changes.json", "2d289497c1298d21c21156e28995956c17adc9f0")
 
 	#run compile filtered
-	if True:
+	if False:
 		def filter_has_mysql(com):
 			return ("diff" in com and "files" in com["diff"] and 
 				"manifests/mysql.pp" in com["diff"]["files"].keys())
 		d.run_filtered(nodelist, "all-changes.json", filter_has_mysql)
+
+	if True:
+		d.run_bisect([("db1046","eqiad")], "all-changes.json", 0, 2000000000)
 
 	if True:
 		d.collect_diffs(nodelist, "diff-collected.csv")
