@@ -373,7 +373,7 @@ class Differ(object):
 				(name, ext) = os.path.splitext(fn)
 				if ext.endswith("json"):
 					(ts, hash) = name.split("-")
-					coms.append((ts, hash, os.path.join(basepath, fn)))
+					coms.append((int(ts), hash, os.path.join(basepath, fn)))
 			coms.sort()
 
 			nodiffs = 0
