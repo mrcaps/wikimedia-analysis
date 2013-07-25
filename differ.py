@@ -524,7 +524,7 @@ def real_run():
 		d.run_filtered(nodelist, "all-changes.json", filter_has_mysql)
 
 	if True:
-		d.run_bisect([("db1046","eqiad")], "all-changes.json", 0, 2000000000)
+		d.run_bisect(nodelist, "all-changes.json", 0, 2000000000)
 
 	if True:
 		d.collect_diffs(nodelist, "diff-collected.csv")

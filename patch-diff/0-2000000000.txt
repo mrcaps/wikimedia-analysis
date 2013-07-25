@@ -5,6 +5,10 @@ manifests/mysql.pp
 +				#notify => Service[nagios-nrpe-server];
 
 manifests/base.pp
+-import "passwords.pp"
++import "../private/manifests/passwords.pp"
+
+manifests/base.pp
 -		nrpe::monitor_service { "dpkg" : description => "DPKG", nrpe_command  => "/usr/lib/nagios/plugins/check_dpkg" }
 +		#nrpe::monitor_service { "dpkg" : description => "DPKG", nrpe_command  => "/usr/lib/nagios/plugins/check_dpkg" }
 
@@ -19,7 +23,6 @@ manifests/base.pp
 manifests/base.pp
 -	nrpe::monitor_service { "raid" : description => "RAID", nrpe_command  => "sudo /usr/local/bin/check-raid.py" }
 +	#nrpe::monitor_service { "raid" : description => "RAID", nrpe_command  => "sudo /usr/local/bin/check-raid.py" }
-
 
 templates/base/puppet.cron.erb
 -scope.function_versioncmp(lsbdistrelease, "12.04")

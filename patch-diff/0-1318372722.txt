@@ -1,0 +1,27 @@
+manifests/base.pp
+-$site = $ipaddress_eth0 ? {
+-	/^208\.80\.15[45]\./	=> "eqiad",
+-	/^10\.64\./		=> "eqiad",
+-	/^91\.198\.174\./	=> "esams",
+-	default			=> "pmtpa"
+-}
++#$site = $ipaddress_eth0 ? {
++#	/^208\.80\.15[45]\./	=> "eqiad",
++#	/^10\.64\./		=> "eqiad",
++#	/^91\.198\.174\./	=> "esams",
++#	default			=> "pmtpa"
++#}
+
+manifests/base.pp
+-$site = $ipaddress_eth0 ? {
+-	/^208\.80\.15[45]\./			=> "eqiad",
+-	/^10\.64\./				=> "eqiad",
+-	/^91\.198\.174\./			=> "esams",
+-	default					=> "pmtpa"
+-}
++#$site = $ipaddress_eth0 ? {
++#	/^208\.80\.15[45]\./			=> "eqiad",
++#	/^10\.64\./				=> "eqiad",
++#	/^91\.198\.174\./			=> "esams",
++#	default					=> "pmtpa"
++#}
