@@ -297,8 +297,15 @@ class Differ(object):
 		(hostname, site) = node
 		return "%s.%s.wmnet" % (hostname, site)
 
-	def get_compiled(self, com, node, use_cached=True):
-		"""get compiled filename for a given commit and node"""
+	def get_compiled(self, com, node, use_cached=True, do_checkout=True):
+		"""get compiled filename for a given commit and node
+
+		Args:
+			com: commit to check out
+			node: which node to evaluate
+			use_cached: should a cached copy be used?
+			do_checkout: set to False to skip the checkout and patch step.
+		"""
 		try:
 			os.makedirs(self.get_out_path(node))
 		except:
@@ -306,10 +313,11 @@ class Differ(object):
 		comppath = os.path.join(self.get_out_path(node), self.get_out_file(node, com))
 		if not os.path.exists(comppath) or not use_cached:
 			log.info("compiling for node=%s @rev=%s..." % (node, str(com["hash"])))
-			self.clean_checkout()
-			self.checkout(com["hash"])
-			log.info("patching...")
-			self.patcher.patch(int(com["time"]))
+			if do_checkout:
+				self.clean_checkout()
+				self.checkout(com["hash"])
+				log.info("patching...")
+				self.patcher.patch(int(com["time"]))
 			log.info("compiling into %s" % comppath)
 			(hostname, site) = node
 			cmpout = self.compile(hostname, site)
@@ -529,9 +537,27 @@ def real_run():
 	if True:
 		d.collect_diffs(nodelist, "diff-collected.csv")
 
+def force_checkout(time, hash, node=("db1046", "eqiad")):
+	d = Differ()
+	d.get_compiled({
+		"time": time,
+		"hash": hash
+	}, node, use_cached=False, do_checkout=False)
+
 if __name__ == "__main__":
 	#unittest.main()
-	real_run()
+	import argparse
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--act", help="")
+	parser.add_argument("--target", help="target to compile; <time>-<hash>")
+	args = parser.parse_args()
+
+	if args.act == "force_checkout":
+		(time, hash) = args.target.split("-")
+		force_checkout(time, hash)
+	else:
+		print "NO ARGS!"
+		#real_run()
 
 	#suite = unittest.TestSuite()
 	#suite.addTests(IncTest)
