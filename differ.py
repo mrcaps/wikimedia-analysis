@@ -410,18 +410,21 @@ class Differ(object):
 			"""Collect all diffs into a single output file."""
 			for node in nodes:
 				basepath = self.get_out_path(node)
-				for fn in os.listdir(basepath):
-					(base, ext) = os.path.splitext(fn)
-					if ext == Differ.EXTENSION_DIFF:
-						(base, ext) = os.path.splitext(base)
-						(ts, commithash) = base.split("-")
-						with open(os.path.join(basepath, fn), "r") as fp:
-							contents = fp.read()
-						hasher = hashlib.md5()
-						hasher.update(contents)
-						writer.writerow([
-							self.__node_to_string(node), 
-							ts, commithash, hasher.hexdigest()])
+				if not os.path.exists(basepath):
+					log.warning("No output path: %s" % (basepath))
+				else:
+					for fn in os.listdir(basepath):
+						(base, ext) = os.path.splitext(fn)
+						if ext == Differ.EXTENSION_DIFF:
+							(base, ext) = os.path.splitext(base)
+							(ts, commithash) = base.split("-")
+							with open(os.path.join(basepath, fn), "r") as fp:
+								contents = fp.read()
+							hasher = hashlib.md5()
+							hasher.update(contents)
+							writer.writerow([
+								self.__node_to_string(node), 
+								ts, commithash, hasher.hexdigest()])
 
 def canonicalize_basic(js):
 	js["data"]["edges"].sort()
@@ -456,7 +459,8 @@ def canonicalize(js):
 				newtags[tag] = True
 			res["tags"] = newtags
 		if "type" in res and res["type"] != "Notify":
-			jsnew["resources"][res["title"]] = res
+			key = res["title"] + "--" + res["type"] + "--" + res["file"]
+			jsnew["resources"][key] = res
 
 	return jsnew
 
@@ -555,6 +559,9 @@ if __name__ == "__main__":
 	if args.act == "force_checkout":
 		(time, hash) = args.target.split("-")
 		force_checkout(time, hash)
+	if args.act == "collect_diffs":
+		d = Differ()
+		d.collect_diffs(d.get_nodes(), "diff-collected.csv")
 	else:
 		print "NO ARGS!"
 		#real_run()
