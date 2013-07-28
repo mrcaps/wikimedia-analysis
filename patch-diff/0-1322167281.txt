@@ -5,3 +5,13 @@ manifests/lvs.pp
 manifests/lvs.pp
 -			default => undef,
 +			
+
+manifests/lvs.pp
+-		'ip' => $realm ? {
+-			'production' => $site ? {
++		'ip' => {
++			'production' => {
+
+manifests/lvs.pp
+-			'labs' => $site ? {
++			'labs' => {

@@ -27,3 +27,36 @@ manifests/base.pp
 templates/base/puppet.cron.erb
 -scope.function_versioncmp(lsbdistrelease, "12.04")
 +1
+
+manifests/site.pp
+-			$varnish_directors = $site ? {
+-				/^(pmtpa|eqiad)$/ => {
+-					"backend" => $bits_appservers,
+-					"test_wikipedia" => $test_wikipedia
+-					},
+-				'esams' => {
+-					"backend" => $varnish_backends
+-					}
+-			}
++			$varnish_directors = {
++				"backend" => $bits_appservers,
++				"test_wikipedia" => $test_wikipedia
++			}
+
+manifests/site.pp
+-		$varnish_fe_directors = $site ? {
+-			"eqiad" => { "backend" => $varnish_fe_backends },
+-			default => {}
+-		}
++		$varnish_fe_directors = {
++			"backend" => $varnish_fe_backends
++		}
+
+manifests/site.pp
+-		$varnish_fe_directors = $site ? {
+-			"eqiad" => { "back" => $varnish_fe_backends },
+-			default => {}
+-		}
++		$varnish_fe_directors = {
++			"back" => $varnish_fe_backends
++		}
