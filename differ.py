@@ -47,7 +47,7 @@ class Patcher(object):
 		with open(fpath, "r") as fp:
 			contents = fp.read()
 			replaced = contents.replace(orig, replace)
-		if replaced:
+		if replaced and replaced != contents:
 			with open(fpath, "w") as fp:
 				fp.write(replaced)
 
@@ -426,9 +426,10 @@ class Differ(object):
 								self.__node_to_string(node), 
 								ts, commithash, hasher.hexdigest()])
 
-	def remove_unparseable(self, nodes):
+	def apply_unparseable(self, nodes, op="remove"):
 		"""Remove unparseable configs in the directory for the specified nodes
 
+		Args:
 		"""
 		for node in nodes:
 			basepath = self.get_out_path(node)
@@ -436,16 +437,26 @@ class Differ(object):
 				for fn in os.listdir(basepath):
 					(name, ext) = os.path.splitext(fn)
 					if ext.endswith("json"):
-						fullpath = os.path.join(basepath, name)
+						fullpath = os.path.join(basepath, fn)
 						try:
 							with open(fullpath, "r") as fp:
-								json.load(fullpath)
-						except:
-							try:
-								log.info("Removing unparseable %s" % fullpath)
-								os.remove(fullpath)
-							except:
-								log.warning("Couldn't remove unparseable %s" % fullpath)
+								json.load(fp)
+						except ValueError, e:
+							if op == "remove":
+								try:
+									log.info("Removing unparseable %s" % fullpath)
+									os.remove(fullpath)
+								except:
+									log.warning("Couldn't remove unparseable %s" % fullpath)
+							elif op == "print":
+								log.info("Unparseable commit %s" % name)
+								lastline = ""
+								with open(fullpath, "r") as fp:
+									for line in fp:
+										lastline = line
+								log.info("Error was %s" % lastline)
+							else:
+								log.error("Unknown op for apply_unparseable: %s" % op)
 
 def canonicalize_basic(js):
 	js["data"]["edges"].sort()
@@ -596,7 +607,10 @@ if __name__ == "__main__":
 		d.collect_diffs(d.get_nodes(), "diff-collected.csv")
 	elif args.act == "remove_unparseable":
 		d = Differ()
-		d.remove_unparseable(d.get_nodes())
+		d.apply_unparseable(d.get_nodes(), op="remove")
+	elif args.act == "print_unparseable":
+		d = Differ()
+		d.apply_unparseable(d.get_nodes(), op="print")
 	else:
 		#print "NO ARGS!"
 		real_run()
