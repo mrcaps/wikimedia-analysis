@@ -1,7 +1,0 @@
-manifests/lvs.pp
--		'ip' => $site ? {
-+		'ip' => {
-
-manifests/lvs.pp
--			default => undef,
-+			

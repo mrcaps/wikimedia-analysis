@@ -25,3 +25,21 @@ manifests/base.pp
 +#	/^91\.198\.174\./			=> "esams",
 +#	default					=> "pmtpa"
 +#}
+
+manifests/base.pp
+-$site = $ipaddress_eth0 ? {
+-	/^208\.80\.15[45]\./			=> "eqiad",
+-	/^208\.80\.153\.(19[2-9]|20[0-7])/	=> "labs_pmtpa",
+-	/^10\.4\.0\./				=> "labs_pmtpa",
+-	/^10\.64\./				=> "eqiad",
+-	/^91\.198\.174\./			=> "esams",
+-	default					=> "pmtpa"
+-}
++#$site = $ipaddress_eth0 ? {
++#	/^208\.80\.15[45]\./			=> "eqiad",
++#	/^208\.80\.153\.(19[2-9]|20[0-7])/	=> "labs_pmtpa",
++#	/^10\.4\.0\./				=> "labs_pmtpa",
++#	/^10\.64\./				=> "eqiad",
++#	/^91\.198\.174\./			=> "esams",
++#	default					=> "pmtpa"
++#}

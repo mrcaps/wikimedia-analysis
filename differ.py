@@ -47,7 +47,7 @@ class Patcher(object):
 		with open(fpath, "r") as fp:
 			contents = fp.read()
 			replaced = contents.replace(orig, replace)
-		if replaced:
+		if replaced and replaced != contents:
 			with open(fpath, "w") as fp:
 				fp.write(replaced)
 
@@ -427,6 +427,38 @@ class Differ(object):
 								ts, commithash, hasher.hexdigest(),
 								os.path.join(basepath, fn)])
 
+	def apply_unparseable(self, nodes, op="remove"):
+		"""Remove unparseable configs in the directory for the specified nodes
+
+		Args:
+		"""
+		for node in nodes:
+			basepath = self.get_out_path(node)
+			if os.path.exists(basepath):
+				for fn in os.listdir(basepath):
+					(name, ext) = os.path.splitext(fn)
+					if ext.endswith("json"):
+						fullpath = os.path.join(basepath, fn)
+						try:
+							with open(fullpath, "r") as fp:
+								json.load(fp)
+						except ValueError, e:
+							if op == "remove":
+								try:
+									log.info("Removing unparseable %s" % fullpath)
+									os.remove(fullpath)
+								except:
+									log.warning("Couldn't remove unparseable %s" % fullpath)
+							elif op == "print":
+								log.info("Unparseable commit %s" % name)
+								lastline = ""
+								with open(fullpath, "r") as fp:
+									for line in fp:
+										lastline = line
+								log.info("Error was %s" % lastline)
+							else:
+								log.error("Unknown op for apply_unparseable: %s" % op)
+
 def canonicalize_basic(js):
 	js["data"]["edges"].sort()
 	js["data"]["resources"].sort()
@@ -460,7 +492,11 @@ def canonicalize(js):
 				newtags[tag] = True
 			res["tags"] = newtags
 		if "type" in res and res["type"] != "Notify":
-			key = res["title"] + "--" + res["type"] + "--" + res["file"]
+			key = res["title"]
+			if "type" in res:
+				key += "--" + res["type"]
+			if "file" in res:
+				key += "--" + res["file"]
 			jsnew["resources"][key] = res
 
 	return jsnew
@@ -513,13 +549,14 @@ class IncTest(unittest.TestCase):
 def real_run():
 	d = Differ()
 	#compute changes over these nodes
-	nodelist = [("db1046", "eqiad")]
 	nodelist = list(d.get_nodes())
+	
 	try:
 		import generate_assignments
 		nodelist = generate_assignments.get_my_nodes()
 	except:
 		log.error("Couldn't get local node list; reverting to manual")
+	nodelist = [("db1046", "eqiad")]
 	log.info("my nodes are %s" % (str(nodelist)))
 
 	#run compile
@@ -542,12 +579,18 @@ def real_run():
 	if True:
 		d.collect_diffs(nodelist, "diff-collected.csv")
 
-def force_checkout(time, hash, node=("db1046", "eqiad")):
+def force_checkout(time, hash, node=("db1046", "eqiad"), do_checkout=True):
+	"""
+
+	Args:
+		node: which node to compile
+		do_checkout: should we check out (True) or just attempt to compile?
+	"""
 	d = Differ()
 	d.get_compiled({
 		"time": time,
 		"hash": hash
-	}, node, use_cached=False, do_checkout=False)
+	}, node, use_cached=False, do_checkout=do_checkout)
 
 if __name__ == "__main__":
 	#unittest.main()
@@ -560,12 +603,18 @@ if __name__ == "__main__":
 	if args.act == "force_checkout":
 		(time, hash) = args.target.split("-")
 		force_checkout(time, hash)
-	if args.act == "collect_diffs":
+	elif args.act == "collect_diffs":
 		d = Differ()
 		d.collect_diffs(d.get_nodes(), "diff-collected.csv")
+	elif args.act == "remove_unparseable":
+		d = Differ()
+		d.apply_unparseable(d.get_nodes(), op="remove")
+	elif args.act == "print_unparseable":
+		d = Differ()
+		d.apply_unparseable(d.get_nodes(), op="print")
 	else:
-		print "NO ARGS!"
-		#real_run()
+		#print "NO ARGS!"
+		real_run()
 
 	#suite = unittest.TestSuite()
 	#suite.addTests(IncTest)

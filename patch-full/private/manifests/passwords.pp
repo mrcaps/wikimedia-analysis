@@ -17,6 +17,7 @@ class passwords::nagios::snmp { }
 class passwords::network { }
 class passwords::openstack::glance { }
 class passwords::openstack::nova { }
+class passwords::openstack::keystone { }
 class passwords::puppet::database { }
 class passwords::analytics { }
 class passwords::bugzilla { }

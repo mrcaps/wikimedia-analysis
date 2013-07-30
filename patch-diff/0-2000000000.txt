@@ -4,13 +4,74 @@ manifests/mysql.pp
 +				content => template("icinga/nrpe_percona.cfg.erb");
 +				#notify => Service[nagios-nrpe-server];
 
+manifests/mysql.pp
+-	include mysql::ganglia,
+-		mysql::monitor::percona::files
++	include mysql::ganglia
++	include mysql::monitor::percona::files
+
+manifests/mysql.pp
+-		if $::lsbdistid == "Ubuntu" and versioncmp($::lsbdistrelease, "12.04") >= 0 {
+-			if $::mariadb == true {
+-				package { [ 'mariadb-client-5.5', 'mariadb-server-core-5.5', 'mariadb-server-5.5', 'libmariadbclient18' ]:
+-					ensure => "5.5.28-mariadb-wmf201212041~precise",
+-				}
+-			} else {
+-				package { [ 'mysqlfb-client-5.1', 'mysqlfb-server-core-5.1', 'mysqlfb-server-5.1', 'libmysqlfbclient16' ]:
+-					ensure => "5.1.53-fb3875-wm1",
+-				}
+-		}
++		if $::lsbdistid == "Ubuntu" and versioncmp($::lsbdistrelease, "12.04") >= 0 {
++			if $::mariadb == true {
++				package { [ 'mariadb-client-5.5', 'mariadb-server-core-5.5', 'mariadb-server-5.5', 'libmariadbclient18' ]:
++					ensure => "5.5.28-mariadb-wmf201212041~precise",
++				}
++			} else {
++				package { [ 'mysqlfb-client-5.1', 'mysqlfb-server-core-5.1', 'mysqlfb-server-5.1', 'libmysqlfbclient16' ]:
++					ensure => "5.1.53-fb3875-wm1",
++				}
++			}
++		}
+
 manifests/base.pp
 -import "passwords.pp"
 +import "../private/manifests/passwords.pp"
 
 manifests/base.pp
+-			include	::apt,
+-				::apt::update
++			include apt
++			include apt::update
+
+manifests/base.pp
+-class base::tcptweaks {
+-	require base::puppet
++class base::tcptweaks {
++	Class[base::puppet] -> Class[base::tcptweaks]
+
+manifests/base.pp
+-		if( $::syslog_remote_server == '' ) {
+-			$syslog_remote_real = 'localhost'
+-		}
++		if( $::syslog_remote_server == '' and $syslog_remote_real == undef ) {
++			$syslog_remote_real = 'localhost'
++		}
+
+manifests/base.pp
+-		if( $::syslog_remote_server == '' ) {
+-			$syslog_remote_server = 'localhost'
+-		}
++		if( $::syslog_remote_server == '' and $syslog_remote_server == undef ) {
++			$syslog_remote_server = 'localhost'
++		}
+
+manifests/base.pp
 -		nrpe::monitor_service { "dpkg" : description => "DPKG", nrpe_command  => "/usr/lib/nagios/plugins/check_dpkg" }
 +		#nrpe::monitor_service { "dpkg" : description => "DPKG", nrpe_command  => "/usr/lib/nagios/plugins/check_dpkg" }
+
+manifests/base.pp
+-			nrpe::monitor_service { "check_dpkg" : description => "DPKG", nrpe_command  => "/usr/lib/nagios/plugins/check_dpkg" }
++			#nrpe::monitor_service { "check_dpkg" : description => "DPKG", nrpe_command  => "/usr/lib/nagios/plugins/check_dpkg" }
 
 manifests/base.pp
 -		nrpe::monitor_service { "raid" : description => "RAID", nrpe_command  => "sudo /usr/local/bin/check-raid.py" }
@@ -21,9 +82,245 @@ manifests/base.pp
 +	#	nrpe::monitor_service { "disk_space" : description => "Disk space", nrpe_command  => "/usr/lib/nagios/plugins/check_disk -w 6% -c 3% -l -e" }
 
 manifests/base.pp
+-	nrpe::monitor_service { "raid" : description => "RAID", nrpe_command  => "sudo /usr/bin/local/check-raid.py" }
++	#nrpe::monitor_service { "raid" : description => "RAID", nrpe_command  => "sudo /usr/bin/local/check-raid.py" }
+
+manifests/base.pp
+-	nrpe::monitor_service { "check_raid" : description => "RAID", nrpe_command  => "sudo /usr/bin/local/check-raid.py" }
+-	nrpe::monitor_service { "check_disk_space" : description => "Disk space", nrpe_command  => "/usr/lib/nagios/plugins/check_disk -w 6% -c 3% -l -e" }
++	#nrpe::monitor_service { "check_raid" : description => "RAID", nrpe_command  => "sudo /usr/bin/local/check-raid.py" }
++	#nrpe::monitor_service { "check_disk_space" : description => "Disk space", nrpe_command  => "/usr/lib/nagios/plugins/check_disk -w 6% -c 3% -l -e" }
+
+
+manifests/base.pp
 -	nrpe::monitor_service { "raid" : description => "RAID", nrpe_command  => "sudo /usr/local/bin/check-raid.py" }
 +	#nrpe::monitor_service { "raid" : description => "RAID", nrpe_command  => "sudo /usr/local/bin/check-raid.py" }
 
 templates/base/puppet.cron.erb
 -scope.function_versioncmp(lsbdistrelease, "12.04")
 +1
+
+manifests/decommissioning.pp
+-"msfe1001",
+-"ms1",
+-"ms2",
+-"ms3",
+-"ms4",
+-"msfe1001",
++"msfe1001",
++"ms1",
++"ms2",
++"ms3",
++"ms4",
+
+manifests/site.pp
+-			$varnish_directors = $site ? {
+-				/^(pmtpa|eqiad)$/ => {
+-					"backend" => $bits_appservers,
+-					"test_wikipedia" => $test_wikipedia
+-					},
+-				'esams' => {
+-					"backend" => $varnish_backends
+-					}
+-			}
++			$varnish_directors = {
++				"backend" => $bits_appservers,
++				"test_wikipedia" => $test_wikipedia
++			}
+
+manifests/site.pp
+-		$varnish_directors = $site ? {
+-			/^(pmtpa|eqiad)$/ => {
+-				"backend" => $bits_appservers,
+-				"test_wikipedia" => $test_wikipedia
+-				},
+-			'esams' => {
+-				"backend" => $varnish_backends
+-				}
+-		}
++		$varnish_directors = {
++			"backend" => $bits_appservers,
++			"test_wikipedia" => $test_wikipedia
++		}
+
+manifests/site.pp
+-			$varnish_directors = $site ? {
+-				/^(pmtpa|eqiad)$/ => {
+-					"backend" => $bits_appservers,
+-					"test_wikipedia" => $test_wikipedia
+-					},
+-				'esams' => {
+-					"backend" => $varnish_backends,
+-					"test_wikipedia" => $varnish_backends
+-					}
+-			}
++			$varnish_directors = {
++				"backend" => $bits_appservers,
++				"test_wikipedia" => $test_wikipedia
++			}
+
+manifests/site.pp
+-		$varnish_directors = $site ? {
+-			/^(pmtpa|eqiad)$/ => {
+-				"backend" => $bits_appservers,
+-				"test_wikipedia" => $test_wikipedia
+-				},
+-			'esams' => {
+-				"backend" => $varnish_backends,
+-				"test_wikipedia" => $varnish_backends
+-				}
+-		}
++		$varnish_directors = {
++			"backend" => $bits_appservers,
++			"test_wikipedia" => $test_wikipedia
++		}
+
+manifests/site.pp
+-		$varnish_directors = $site ? {
+-			/^(pmtpa|eqiad)$/ => { "appservers" => $varnish_backends },
+-			'esams' => { "upstream" => $varnish_backends },
+-			default => {}
+-		}
++		$varnish_directors = { 
++			"appservers" => $varnish_backends,
++			"upstream" => $varnish_backends,
++		}
+
+manifests/site.pp
+-		$varnish_fe_directors = $site ? {
+-			"eqiad" => { "backend" => $varnish_fe_backends },
+-			default => {}
+-		}
++		$varnish_fe_directors = {
++			"backend" => $varnish_fe_backends
++		}
+
+manifests/site.pp
+-		$varnish_fe_directors = $site ? {
+-			"eqiad" => { "back" => $varnish_fe_backends },
+-			default => {}
+-		}
++		$varnish_fe_directors = {
++			"back" => $varnish_fe_backends
++		}
+
+manifests/site.pp
+-	if $hostname =~ /^db10(51|52)/ {
+-		class { role::coredb::s1 : innodb_file_per_table => true, mariadb => true }
+-	elsif $hostname =~ /^db10(43|49)/ {
++	if $hostname =~ /^db10(51|52)/ {
++		class { role::coredb::s1 : innodb_file_per_table => true, mariadb => true }
++	} elsif $hostname =~ /^db10(43|49)/ {
+
+manifests/site.pp
+-	include standard,
+-		accounts::demon
+-		role::gerrit::production::replicationdest
++	include standard
++	include accounts::demon
++	include role::gerrit::production::replicationdest
+
+templates/misc/initcwnd.erb
+-ip route change default via <%= default_gateway %> dev <%= default_gateway_interface %>  metric 100 initcwnd 10
++ip route change default via ... dev ... metric 100 initcwnd 10
+
+templates/base/puppet.cron.erb
+-<% $crontime = scope.fqdn_rand(30) %>
++<% $crontime = 20 %>
+
+templates/base/puppet.cron.erb
+-<% $crontime = fqdn_rand(30) %>
++<% $crontime = 20 %>
+
+templates/base/puppet.cron.erb
+-<%= $crontime %>,<%= $crontime+30 %> * * * * root timeout -k 300 1800 puppet agent --onetime --verbose --no-daemonize --no-splay --show_diff >> /var/log/puppet.log 2>&1
+templates/base/puppet.cron.erb
++<% $crontime = 20 %>
++<%= $crontime %>,<%= $crontime+30 %> * * * * root timeout -k 310 1800 puppet agent --onetime --verbose --no-daemonize --no-splay --show_diff >> /var/log/puppet.log 2>&1
+
+manifests/lvs.pp
+-		'ip' => $site ? {
++		'ip' => {
+
+manifests/lvs.pp
+-			default => undef,
++			
+
+manifests/lvs.pp
+-		'ip' => $realm ? {
+-			'production' => $site ? {
++		'ip' => {
++			'production' => {
+
+manifests/lvs.pp
+-			'ip' => $realm ? {
+-				'production' => $site ? {
++			'ip' => {
++				'production' => {
+
+manifests/lvs.pp
+-			'labs' => $site ? {
++			'labs' => {
+
+manifests/lvs.pp
+-		'high-traffic1' => $realm ? {
+-			'production' => $site ? {
++		'high-traffic1' => {
++			'production' => {
+
+manifests/lvs.pp
+-		'high-traffic2' => $realm ? {
+-			'production' => $site ? {
++		'high-traffic2' => {
++			'production' => {
+
+manifests/lvs.pp
+-		'https' => $realm ? {
+-			'production' => $site ? {
++		'https' => {
++			'production' => {
+
+manifests/lvs.pp
+-		'low-traffic' => $realm ? {
+-			'production' => $site ? {
++		'low-traffic' => {
++			'production' => {
+
+
+
+#this is actually a bad merge that duplicated 
+#manifests/ganglia.pp
+#-	$name_suffix = " ${site}"
+#+if $name_suffix == undef {
+#+	$name_suffix = " ${site}"
+#+}
+
+manifests/ganglia.pp
+-						"Ceph cluster esams" => "ms-be3001.esams.wikimedia.org ms-be3002.esams.wikimedia.org"
+-						"Parsoid pmtpa" => "wtp1.pmtpa.wmnet",
++						"Ceph cluster esams" => "ms-be3001.esams.wikimedia.org ms-be3002.esams.wikimedia.org",
++						"Parsoid pmtpa" => "wtp1.pmtpa.wmnet",
+
+manifests/network.pp
+-if $hostname in $nagios::configuration::master_hosts {
+-	include network::checks
+-}
++if $nagios::configuration::master_hosts != undef {
++	if $hostname in $nagios::configuration::master_hosts {
++		include network::checks
++	}
++}
+
+manifests/network.pp
+-include icinga::configuration::variables
+-if $hostname in $icinga::configuration::variables::master_hosts {
+-	include network::checks
+-}
++#include icinga::configuration::variables
++#if $hostname in $icinga::configuration::variables::master_hosts {
++#	include network::checks
++#}
+
+manifests/misc/bugzilla.pp
+-		path => "/srv/org/wikimedia/bugzilla/bugzilla_community_metrics.sh":
++		path => "/srv/org/wikimedia/bugzilla/bugzilla_community_metrics.sh",
