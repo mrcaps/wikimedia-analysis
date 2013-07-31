@@ -1,7 +1,9 @@
 operations-puppet
 libgit2
 .Rhistory
+.RData
 output*
+timeseries
 *.pyc
 
 times.csv

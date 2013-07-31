@@ -17,7 +17,7 @@ theme_update(plot.margin = unit(c(0,0,0,0), "cm"))
 
 source("common.r")
 
-datafiles = getdatafiles(c("data/MySQL%20eqiad", "data/MySQL%20pmtpa"), "*.csv")
+datafiles = getdatafiles(c("timeseries/MySQL%20eqiad", "timeseries/MySQL%20pmtpa"), "*.csv")
 
 #convert ts to a day number
 dateno = function(ts) {
@@ -32,7 +32,10 @@ if (!exists("indata")) {
   indata = llply(indata, function(l) {
     l$cps = cpprobs(l$data)
     l
-  }, .progress="text", .parallel=TRUE)
+  }, .progress="text", .parallel=TRUE, .paropts=list(
+    .export=c("cpprobs"),
+    .packages=c("bcp")
+  ))
   
   indata_minday = laply(head(indata, 1e6), function(l) {
     min(dateno(l$data$t))
@@ -59,7 +62,7 @@ if (!exists("configdiffs")) {
 
 #the source changes
 if (!exists("changesource")) {
-  fcont = paste(readLines("C:/Docs/wikimedia/all-changes.json"), collapse=" ")
+  fcont = paste(readLines("all-changes.json"), collapse=" ")
   changesource = fromJSON(fcont)
   names(changesource) = laply(changesource, function(c) {c$hash})
 }
@@ -112,10 +115,6 @@ if (!exists("correlations")) {
     
     #get test statistic across all metrics at this commit
     stats = ldply(indata, function(l) {
-      dateno = function(ts) {
-        as.numeric(as.Date(ts))
-      }
-      
       data.frame(
         commithash=commit_hash,
         commitday=commit_day,
@@ -125,7 +124,7 @@ if (!exists("correlations")) {
         stat=sum(l$cps$v[abs(dateno(l$cps$t) - commit_day) < 2]),
         ischanged=(l$node %in% diffs$node)
       )
-    }, .parallel=TRUE)
+    }, .progress="text")
     
     result = cor.test(stats$stat, as.numeric(stats$ischanged), method="pearson")
     
@@ -134,7 +133,10 @@ if (!exists("correlations")) {
     stats$estimate = result$estimate
     
     stats
-  }, .progress="text")
+  }, .parallel=TRUE, .paropts=list(
+    .export=c("dateno", "ddply", "ldply", "indata"),
+    .packages=c("plyr")
+  ))
 
   #use estimate for sorting: this is the actual correlation
   topcors = arrange(
