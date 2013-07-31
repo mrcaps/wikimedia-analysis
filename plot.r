@@ -1,3 +1,4 @@
+#Create some basic summary plots for Wikimedia configuration changes
 library(plyr)
 library(ggplot2)
 library(RColorBrewer)

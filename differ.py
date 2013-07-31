@@ -365,7 +365,9 @@ class Differ(object):
 				fp.write(contents)
 
 		if (jsa and not jsb) or (not jsa and jsb):
-			write_result('{"error":"unparseable"}\n')
+			#don't write a diff for an unparseable change
+			#	(now that "most" of the issues have been patched)
+			#write_result('{"error":"unparseable"}\n')
 			return Differ.DIFF_YES
 		elif jsa and jsb:
 			#canonicalize
@@ -572,13 +574,12 @@ def real_run():
 	d = Differ()
 	#compute changes over these nodes
 	nodelist = list(d.get_nodes())
-	
+	nodelist = [("db1046", "eqiad")]	
 	try:
 		import generate_assignments
 		nodelist = generate_assignments.get_my_nodes()
 	except:
 		log.error("Couldn't get local node list; reverting to manual")
-	nodelist = [("db1046", "eqiad")]
 	log.info("my nodes are %s" % (str(nodelist)))
 
 	#run compile
