@@ -159,13 +159,13 @@ sample = arrange(
 
 outdir = file.path("figs", "changemap")
 
-allFiles = dlply(correlations_top, .(estimate), function(corrs) {
-  strength = floor(unique(corrs$estimate)*10000)
-  changepath = file.path(outdir, strength)
-  dir.create(changepath, showWarnings=FALSE, recursive=TRUE)
-    
+allFiles = dlply(correlations_top, .(commithash), function(corrs) {
   commit_hash = as.character(unique(corrs$commithash))
-  stopifnot(length(commit_hash) == 1)
+  strength = floor(unique(corrs$estimate)*10000)
+  stopifnot(length(strength) == 1)
+  
+  changepath = file.path(outdir, paste(strength, commit_hash, sep="-"))
+  dir.create(changepath, showWarnings=FALSE, recursive=TRUE)
   
   comsrc = changesource[[commit_hash]]
   cat("Writing plots for", comsrc$hash, "strength=", strength, "\n")
