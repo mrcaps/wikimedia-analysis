@@ -270,15 +270,23 @@ class Differ(object):
 		for node in nodes:
 			self.__cmp_region(torun, node, 0, len(torun)-1)
 
-			#now, we might have spurious diffs from the "edges" of the bisections
-			# remove all diffs, then compute from the commits we compiled.
-			nodepath = self.get_out_path(node)
-			for fn in os.listdir(nodepath):
-				if fn.endswith(".diff"):
-					os.remove(os.path.join(nodepath, fn))
+		#now, we might have spurious diffs from the "edges" of the bisections
+		# remove all diffs, then compute from the commits we compiled.
+		self.remove_diffs(nodes)
 
 		#recompute all diffs.
 		self.compute_diffs(nodes)
+
+	def remove_diffs(self, nodes):
+		"""Remove all diffs that were computed for the given nodes."""
+		for node in nodes:
+			nodepath = self.get_out_path(node)
+			if not os.path.exists(nodepath):
+				log.warning("No commits for node %s" % nodepath)
+				continue
+			for fn in os.listdir(nodepath):
+				if fn.endswith(".diff"):
+					os.remove(os.path.join(nodepath, fn))
 
 	def __cmp_region(self, commits, node, lodx, hidx):
 		log.info("__cmp_region from %d to %d" % (lodx, hidx))
@@ -377,6 +385,9 @@ class Differ(object):
 		for node in nodes:
 			coms = []
 			basepath = self.get_out_path(node)
+			if not os.path.exists(basepath):
+				log.warning("No compiles for node %s" % (basepath))
+				continue
 			for fn in os.listdir(basepath):
 				(name, ext) = os.path.splitext(fn)
 				if ext.endswith("json"):
@@ -399,15 +410,17 @@ class Differ(object):
 
 			log.info("%d commits with no diffs, %d commits with diffs on node %s" % (nodiffs, withdiffs, node))
 
-	def collect_diffs(self, nodes, outfile):
+	def collect_diffs(self, nodes, csvout, jsonout):
 		import hashlib
 		import csv
 
-		with open(outfile, "w") as outfp:
+		with open(csvout, "w") as outfp:
 			writer = csv.writer(outfp)
 			writer.writerow(["node", "timestamp", "commithash", "diffhash", "loc"])
 
 			"""Collect all diffs into a single output file."""
+			byhash = dict()
+
 			for node in nodes:
 				basepath = self.get_out_path(node)
 				if not os.path.exists(basepath):
@@ -422,10 +435,17 @@ class Differ(object):
 								contents = fp.read()
 							hasher = hashlib.md5()
 							hasher.update(contents)
+							digest = hasher.hexdigest()
+							if not digest in byhash:
+								byhash[digest] = contents
 							writer.writerow([
 								self.__node_to_string(node), 
-								ts, commithash, hasher.hexdigest(),
+								ts, commithash, digest,
 								os.path.join(basepath, fn)])
+
+			#write out the digest to diff mapping
+			with open(jsonout, "w") as outfp:
+				json.dump(byhash, outfp)
 
 	def apply_unparseable(self, nodes, op="remove"):
 		"""Remove unparseable configs in the directory for the specified nodes
@@ -491,7 +511,9 @@ def canonicalize(js):
 			for tag in res["tags"]:
 				newtags[tag] = True
 			res["tags"] = newtags
-		if "type" in res and res["type"] != "Notify":
+		if ("type" in res and 
+			res["type"] != "Notify" and
+			res["title"] != "/etc/salt/minion"):
 			key = res["title"]
 			if "type" in res:
 				key += "--" + res["type"]
@@ -603,9 +625,13 @@ if __name__ == "__main__":
 	if args.act == "force_checkout":
 		(time, hash) = args.target.split("-")
 		force_checkout(time, hash)
+	elif args.act == "rebuild_diffs":
+		d = Differ()
+		d.remove_diffs(d.get_nodes())
+		d.compute_diffs(d.get_nodes())
 	elif args.act == "collect_diffs":
 		d = Differ()
-		d.collect_diffs(d.get_nodes(), "diff-collected.csv")
+		d.collect_diffs(d.get_nodes(), "diff-collected.csv", "diff-collected.json")
 	elif args.act == "remove_unparseable":
 		d = Differ()
 		d.apply_unparseable(d.get_nodes(), op="remove")

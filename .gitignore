@@ -6,6 +6,7 @@ output*
 
 times.csv
 diff-collected.csv
+diff-collected.json
 all-changes.json
 filtered-mysql.json
 
