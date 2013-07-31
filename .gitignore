@@ -11,3 +11,5 @@ all-changes.json
 filtered-mysql.json
 
 run-differ.sh
+
+figs/changemap

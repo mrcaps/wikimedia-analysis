@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+<link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet">
+<script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
+
+<style type="text/css">
+#changelst div {
+	font-size: 3em;
+	line-height: 1em;
+	font-weight: bold;
+	text-align: right;
+}
+#changelst div:hover {
+	cursor: pointer;
+	color: #6666ff;
+}
+
+.changesubject {
+	font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<div class="container" style="border-bottom: 1px dashed #ccc;">
+	<h1>Changes</h1>
+</div>
+
+<div class="container-fluid">
+  <div class="row-fluid">
+    <div class="span2">
+      <h4>Changes, by score</h4>
+      <div id="changelst">
+
+      </div>
+    </div>
+    <div class="span10" id="changedata" style="padding: 1em">
+      
+    </div>
+  </div>
+</div>
+
+<script>
+$(document).ready(function() {
+	//for disabling caching when updating results
+	$.ajaxSetup({ cache: false });
+
+	$.getJSON("figs/index.json", function(indexJson) {
+		var indexlist = [];
+		$.each(indexJson, function(i, el) {
+			var osimsum = el.split("/");
+			osimsum = parseInt(osimsum[osimsum.length-1]);
+			var toload = $("<div>").text(osimsum);
+			toload.order = osimsum;
+			indexlist.push(toload);
+
+			var pth = el + "/info.json";
+			$.getJSON(pth, function(json) {
+				toload.click(function(evt) {
+					$("#changedata").empty();
+					$("#changedata").append($("<div>").text("Commit " + json.hash));
+					$("#changedata").append($("<div>").addClass("changesubject").text(json.subject));
+
+					$.each(json.files, function(i, el) {
+						$("#changedata").append($("<div>").html(i));
+						$("#changedata").append($("<pre>").html(el.text));
+					});
+
+					$("#changedata").append($("<div>").css("font-style", "italic").html("Compiled to:"));
+
+					$.each(json.compiled, function(i, el) {
+						$("#changedata").append($("<pre>").html(el))
+					});
+					
+					var plotsort = [];
+					$.each(json.plots, function(i, el) {
+						if (el !== "" && el !== "NA") {
+							plotsort.push(el);
+						}
+					});
+
+					plotsort.sort();
+
+					$.each(plotsort, function(i, el) {
+						$("#changedata").append($("<img>").attr("src", el));
+						$("#changedata").append($("<img>").attr("src", el + ".prob.png"));
+					});
+				});
+			});
+		});
+
+		indexlist.sort(function(a, b) { return b.order - a.order; });
+		$.each(indexlist, function(i, elem) {
+			$("#changelst").append(elem);
+		});
+	});
+});
+</script>
+
+</body>
+</html>

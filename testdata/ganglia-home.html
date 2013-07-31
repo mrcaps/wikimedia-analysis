@@ -1,0 +1,3095 @@
+<!-- Begin header.tpl -->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Ganglia:: Wikimedia Grid Report</title>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+<link type="text/css" href="css/smoothness/jquery-ui-1.9.1.custom.min.css" rel="stylesheet" />
+<link type="text/css" href="css/jquery.liveSearch.css" rel="stylesheet" />
+<link type="text/css" href="css/jquery.multiselect.css" rel="stylesheet" />
+<link type="text/css" href="css/jquery.flot.events.css" rel="stylesheet" />
+<link type="text/css" href="./styles.css" rel="stylesheet" />
+<script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.9.1.custom.min.js"></script>
+<script type="text/javascript" src="js/jquery.livesearch.min.js"></script>
+<script type="text/javascript" src="js/ganglia.js"></script>
+<script type="text/javascript" src="js/jquery.gangZoom.js"></script>
+<script type="text/javascript" src="js/jquery.cookie.js"></script>
+<script type="text/javascript" src="js/jquery-ui-timepicker-addon.js"></script>
+<script type="text/javascript" src="js/jquery.ba-bbq.min.js"></script>
+<script type="text/javascript" src="js/combobox.js"></script>
+<script type="text/javascript" src="js/jquery.scrollTo-1.4.2-min.js"></script>
+<script type="text/javascript" src="js/jquery.buttonsetv.js"></script>
+<script type="text/javascript">
+    var server_utc_offset=0;
+    
+    var g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+
+    function refreshHeader() {
+      $.get('header.php?date_only=1', function(data) {
+        var title = $("#page_title").text();
+        var l = title.lastIndexOf(" for ");
+        title = title.substring(0, l);
+        title += " for " + data;
+        $("#page_title").text(title);
+        });
+    }
+
+    function refresh() {
+      var selected_tab = $("#selected_tab").val();
+      if (selected_tab == "agg") {
+        refreshAggregateGraph();
+        g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+      } else if (selected_tab == "v") {
+        refreshHeader();
+        if ($.isFunction(window.refreshView)) {
+          refreshView();
+          g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+        } else if ($.isFunction(window.refreshDecomposeGraph)) {
+          refreshDecomposeGraph();
+          g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+        } else
+          ganglia_form.submit();
+      } else if (selected_tab == "ev") {
+        refreshOverlayEvent();
+        g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+      } else if (selected_tab == "m") {
+        if ($.isFunction(window.refreshClusterView)) {
+          refreshHeader();
+          refreshClusterView();
+          g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+        } else if ($.isFunction(window.refreshHostView)) {
+          refreshHeader();
+          refreshHostView();
+          g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+        } else
+          ganglia_form.submit();
+      } else
+        ganglia_form.submit();
+    }
+
+    $(function() {
+      g_overlay_events = ($("#overlay_events").val() == "true");
+
+      g_tabIndex = new Object();
+      g_tabName = [];
+      var tabName = ["m", "s", "v", "agg", "ch", "ev", "rot", "mob"];
+      var j = 0;
+      for (var i in tabName) {
+        if (tabName[i] == "ev" && !g_overlay_events)
+          continue;
+        g_tabIndex[tabName[i]] = j++;
+        g_tabName.push(tabName[i]);
+      }
+
+      // Follow tab's URL instead of loading its content via ajax
+      var tabs = $("#tabs");
+      if (tabs[0]) {
+        tabs.tabs();
+        // Restore previously selected tab
+        var selected_tab = $("#selected_tab").val();
+        //alert("selected_tab = " + selected_tab);
+        if (typeof g_tabIndex[selected_tab] != 'undefined') {
+          try {
+            //alert("Selecting tab: " + selected_tab);
+            tabs.tabs("select", g_tabIndex[selected_tab]);
+            if (selected_tab == "rot")
+              autoRotationChooser();
+          } catch (err) {
+            try {
+              alert("Error(ganglia.js): Unable to select tab: " + 
+                    selected_tab + ". " + err.getDescription());
+            } catch (err) {
+              // If we can't even show the error, fail silently.
+            }
+          }
+        }
+
+        tabs.bind("tabsselect", function(event, ui) {
+          $("#selected_tab").val(g_tabName[ui.index]);
+          if (g_tabName[ui.index] != "mob")
+            $.cookie("ganglia-selected-tab-" + window.name, ui.index);
+          if (ui.index == g_tabIndex["m"] ||
+              ui.index == g_tabIndex["v"] ||
+              ui.index == g_tabIndex["ch"])
+            ganglia_form.submit();
+        });
+      }
+    });
+
+    $(function() {
+      $("#metrics-picker").combobox();
+
+      $("#sort_menu").toggle(); 
+
+      $(".header_btn").button();
+    });
+
+  $(function () {
+
+    done = function done(startTime, endTime) {
+            setStartAndEnd(startTime, endTime);
+            document.forms['ganglia_form'].submit();
+    }
+
+    cancel = function (startTime, endTime) {
+            setStartAndEnd(startTime, endTime);
+    }
+
+    defaults = {
+        startTime: 1370452663,
+        endTime: 1370456263,
+        done: done,
+        cancel: cancel
+    }
+
+    $(".host_small_zoomable").gangZoom($.extend({
+        paddingLeft: 67,
+        paddingRight: 30,
+        paddingTop: 38,
+        paddingBottom: 25
+    }, defaults));
+
+    $(".host_medium_zoomable").gangZoom($.extend({
+        paddingLeft: 67,
+        paddingRight: 30,
+        paddingTop: 38,
+        paddingBottom: 40
+    }, defaults));
+
+    $(".host_default_zoomable").gangZoom($.extend({
+        paddingLeft: 66,
+        paddingRight: 30,
+        paddingTop: 37,
+        paddingBottom: 50
+    }, defaults));
+
+    $(".host_large_zoomable").gangZoom($.extend({
+        paddingLeft: 66,
+        paddingRight: 29,
+        paddingTop: 37,
+        paddingBottom: 56
+    }, defaults));
+
+    $(".cluster_zoomable").gangZoom($.extend({
+        paddingLeft: 67,
+        paddingRight: 30,
+        paddingTop: 37,
+        paddingBottom: 50
+    }, defaults));
+
+    function rrdDateTimeString(date) {
+      return (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + date.getHours() + ":" + date.getMinutes();
+    }
+
+    function setStartAndEnd(startTime, endTime) {
+        // we're getting local start/end times.
+
+        // getTimezoneOffset returns negative values east of UTC,
+        // which is the opposite of PHP. we want negative values to the west.
+        var local_offset = new Date().getTimezoneOffset() * 60 * -1;
+        var delta = local_offset - server_utc_offset;
+        var date = new Date((Math.floor(startTime) - delta) * 1000);
+        $("#datepicker-cs").val(rrdDateTimeString(date));
+        date = new Date((Math.floor(endTime) - delta) * 1000);
+        $("#datepicker-ce").val(rrdDateTimeString(date));
+    }
+
+    initShowEvent();
+    initTimeShift();
+  });
+
+
+</script>
+
+</head>
+<body style="background-color: #ffffff;" onunload="g_refresh_timer=null">
+
+
+
+
+<div id="tabs">
+<ul>
+  <li><a href="#tabs-main">Main</a></li>
+  <li><a href="#tabs-search">Search</a></li>
+  <li><a href="#tabs-main">Views</a></li>
+  <li><a href="aggregate_graphs.php">Aggregate Graphs</a></li>
+  <li><a href="#tabs-main">Compare Hosts</a></li>
+  <li><a href="events.php">Events</a></li>
+
+  <li><a href="#tabs-autorotation" onclick="autoRotationChooser();">Automatic Rotation</a></li>
+  <li><a href="#tabs-livedashboard" onclick="liveDashboardChooser();">Live Dashboard</a></li>  
+  <li><a href="#tabs-mobile" onclick="window.location.href='mobile.php';">Mobile</a></li>
+</ul>
+
+<div id="tabs-main">
+<form action="./" method="GET" name="ganglia_form">
+  <div style="background-color:#dddddd;padding:5px;">
+     <big style="float:left;"><b id="page_title">Wikimedia Grid Report for Wed, 05 Jun 2013 18:17:43 +0000</b></big><input style="float:right;" class="header_btn" type="submit" value="Get Fresh Data"/><div style="clear:both"></div>
+  </div>
+  <div style="padding:5px 5px 0 5px;">
+    <div style="float:left;" id="range_menu" class="nobr">Last&nbsp;&nbsp;<input OnChange="ganglia_form.submit();" type="radio" id="range-hour" name="r" value="hour" checked="checked"/><label for="range-hour">hour</label><input OnChange="ganglia_form.submit();" type="radio" id="range-2hr" name="r" value="2hr" /><label for="range-2hr">2hr</label><input OnChange="ganglia_form.submit();" type="radio" id="range-4hr" name="r" value="4hr" /><label for="range-4hr">4hr</label><input OnChange="ganglia_form.submit();" type="radio" id="range-day" name="r" value="day" /><label for="range-day">day</label><input OnChange="ganglia_form.submit();" type="radio" id="range-week" name="r" value="week" /><label for="range-week">week</label><input OnChange="ganglia_form.submit();" type="radio" id="range-month" name="r" value="month" /><label for="range-month">month</label><input OnChange="ganglia_form.submit();" type="radio" id="range-year" name="r" value="year" /><label for="range-year">year</label><input OnChange="ganglia_form.submit();" type="radio" id="range-job" name="r" value="job" /><label for="range-job">job</label></div>
+    <div style="float:left;" id="custom_range_menu">or <span class="nobr">from <input type="TEXT" title="Feb 27 2007 00:00, 2/27/2007, 27.2.2007, now -1 week, -2 days, start + 1 hour, etc." NAME="cs" ID="datepicker-cs" SIZE="17"> to <input type="TEXT" title="Feb 27 2007 00:00, 2/27/2007, 27.2.2007, now -1 week, -2 days, start + 1 hour, etc." name="ce" ID="datepicker-ce" SIZE="17"> <input type="submit" value="Go">
+<input type="button" value="Clear" onclick="ganglia_submit(1)"></span>
+</div>
+    <div style="float:right;">&nbsp;&nbsp;</div>
+    <div style="clear:both;"></div>
+  </div>
+  <div id="sort_menu" style="padding:5px 5px 0 5px;">
+   Metric&nbsp;&nbsp; <select name="m" id="metrics-picker"></select>&nbsp;&nbsp;
+     Sorted&nbsp;&nbsp;<input OnChange="ganglia_submit();" type="radio" id="radio-ascending" name="s" value="ascending" /><label for="radio-ascending">ascending</label><input OnChange="ganglia_submit();" type="radio" id="radio-descending" name="s" value="descending" /><label for="radio-descending">descending</label><input OnChange="ganglia_submit();" type="radio" id="radio-by_name" name="s" value="by name" checked="checked"/><label for="radio-by_name">by name</label><input OnChange="ganglia_submit();" type="radio" id="radio-by_hosts_up" name="s" value="by hosts up" /><label for="radio-by_hosts_up">by hosts up</label><input OnChange="ganglia_submit();" type="radio" id="radio-by_hosts_down" name="s" value="by hosts down" /><label for="radio-by_hosts_down">by hosts down</label>
+  </div>
+  <div id="sort_menu" style="padding:5px 5px 0 5px;">
+    <b><a href="./?m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">Wikimedia Grid</a></b> <b>&gt;</b>
+<select name="c" OnChange="ganglia_form.submit();">
+<option value="">--Choose a Source
+<option value="API%20application%20servers%20eqiad">API application servers eqiad
+<option value="API%20application%20servers%20pmtpa">API application servers pmtpa
+<option value="Analytics%20cluster%20eqiad">Analytics cluster eqiad
+<option value="Application%20servers%20eqiad">Application servers eqiad
+<option value="Application%20servers%20pmtpa">Application servers pmtpa
+<option value="Bits%20application%20servers%20eqiad">Bits application servers eqiad
+<option value="Bits%20application%20servers%20pmtpa">Bits application servers pmtpa
+<option value="Bits%20caches%20eqiad">Bits caches eqiad
+<option value="Bits%20caches%20esams">Bits caches esams
+<option value="Bits%20caches%20pmtpa">Bits caches pmtpa
+<option value="Ceph%20eqiad">Ceph eqiad
+<option value="Fundraising%20eqiad">Fundraising eqiad
+<option value="Fundraising%20pmtpa">Fundraising pmtpa
+<option value="Glusterfs%20cluster%20pmtpa">Glusterfs cluster pmtpa
+<option value="Image%20scalers%20eqiad">Image scalers eqiad
+<option value="Image%20scalers%20pmtpa">Image scalers pmtpa
+<option value="Jobrunners%20eqiad">Jobrunners eqiad
+<option value="Jobrunners%20pmtpa">Jobrunners pmtpa
+<option value="LVS%20loadbalancers%20eqiad">LVS loadbalancers eqiad
+<option value="LVS%20loadbalancers%20esams">LVS loadbalancers esams
+<option value="LVS%20loadbalancers%20pmtpa">LVS loadbalancers pmtpa
+<option value="Labs%20NFS%20cluster%20pmtpa">Labs NFS cluster pmtpa
+<option value="Memcached%20eqiad">Memcached eqiad
+<option value="Memcached%20pmtpa">Memcached pmtpa
+<option value="Miscellaneous%20eqiad">Miscellaneous eqiad
+<option value="Miscellaneous%20esams">Miscellaneous esams
+<option value="Miscellaneous%20pmtpa">Miscellaneous pmtpa
+<option value="Mobile%20caches%20eqiad">Mobile caches eqiad
+<option value="MySQL%20eqiad">MySQL eqiad
+<option value="MySQL%20pmtpa">MySQL pmtpa
+<option value="PDF%20servers%20pmtpa">PDF servers pmtpa
+<option value="Parsoid%20Varnish%20eqiad">Parsoid Varnish eqiad
+<option value="Parsoid%20Varnish%20pmtpa">Parsoid Varnish pmtpa
+<option value="Parsoid%20eqiad">Parsoid eqiad
+<option value="Parsoid%20pmtpa">Parsoid pmtpa
+<option value="Redis%20eqiad">Redis eqiad
+<option value="SSL%20cluster%20eqiad">SSL cluster eqiad
+<option value="SSL%20cluster%20esams">SSL cluster esams
+<option value="SSL%20cluster%20pmtpa">SSL cluster pmtpa
+<option value="Search%20eqiad">Search eqiad
+<option value="Search%20pmtpa">Search pmtpa
+<option value="Swift%20pmtpa">Swift pmtpa
+<option value="Text%20caches%20esams">Text caches esams
+<option value="Text%20squids%20eqiad">Text squids eqiad
+<option value="Text%20squids%20pmtpa">Text squids pmtpa
+<option value="Upload%20caches%20eqiad">Upload caches eqiad
+<option value="Upload%20caches%20esams">Upload caches esams
+<option value="Upload%20squids%20esams">Upload squids esams
+<option value="Upload%20squids%20pmtpa">Upload squids pmtpa
+<option value="Video%20scalers%20eqiad">Video scalers eqiad
+<option value="Video%20scalers%20pmtpa">Video scalers pmtpa
+<option value="Virtualization%20cluster%20pmtpa">Virtualization cluster pmtpa
+</select>
+<b></b>
+&nbsp;&nbsp;
+  </div>
+
+
+<input type="hidden" name="tab" id="selected_tab" value="m">
+<input type="hidden" id="vn" name="vn" value="">
+<input type="hidden" id="overlay_events" value="true">
+
+<hr size="1" noshade>
+<!-- End header.tpl -->
+
+
+<table border="0" width="100%">
+
+<tr>
+<td colspan="3">&nbsp;</td>
+</tr>
+
+<tr>
+  <td class=grid colspan="3">
+    <a href="./?m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Wikimedia Grid (52 sources)</strong></a> <FONT SIZE="-2"><a href="./?t=yes&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">(tree view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>14636</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>999</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>1</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>14%, 15%, 14%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>14%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+   <td>
+    <a href="./graph_all_periods.php?me=Wikimedia&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;g=load_report&amp;z=large">
+      <img src="./graph.php?me=Wikimedia&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;g=load_report&amp;z=medium"
+           alt="Wikimedia Grid (52 sources) LOAD" border="0" />
+    </a>
+   </td>
+   <td>
+    <a href="./graph_all_periods.php?me=Wikimedia&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;g=mem_report&amp;z=large">
+      <img src="./graph.php?me=Wikimedia&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;g=mem_report&amp;z=medium"
+           alt="Wikimedia Grid (52 sources) MEM" border="0" />
+    </a>
+   </td>
+  </tr>
+
+  <tr>
+   <td>
+    <a href="./graph_all_periods.php?me=Wikimedia&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;g=cpu_report&amp;z=large">
+      <img src="./graph.php?me=Wikimedia&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;g=cpu_report&amp;z=medium"
+           alt="Wikimedia Grid (52 sources) CPU" border="0" />
+    </a>
+   </td>
+   <td>
+    <a href="./graph_all_periods.php?me=Wikimedia&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;g=network_report&amp;z=large">
+      <img src="./graph.php?me=Wikimedia&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;g=network_report&amp;z=medium"
+           alt="Wikimedia Grid (52 sources) NETWORK" border="0" />
+    </a>
+   </td>
+
+  </tr>
+ </table>
+</td>
+
+
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=API%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>API application servers eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=API%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>1160</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>55</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>23%, 23%, 23%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>23%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=API%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=API%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="API application servers eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=API%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=API%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="API application servers eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=API%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>API application servers pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=API%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>744</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>47</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>0%, 0%, 0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=API%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=API%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="API application servers pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=API%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=API%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="API application servers pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Analytics%20cluster%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Analytics cluster eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Analytics%20cluster%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>476</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>25</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>16%, 16%, 2%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>8%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Analytics%20cluster%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Analytics%20cluster%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Analytics cluster eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Analytics%20cluster%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Analytics%20cluster%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Analytics cluster eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Application servers eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>2852</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>135</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>24%, 24%, 24%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>24%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Application servers eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Application servers eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Application servers pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>1840</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>116</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>0%, 0%, 0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Application servers pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Application servers pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Bits%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Bits application servers eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Bits%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>96</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>4</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>10%, 10%, 10%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>10%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Bits%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Bits%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Bits application servers eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Bits%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Bits%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Bits application servers eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Bits%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Bits application servers pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Bits%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>64</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>4</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>0%, 0%, 0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Bits%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Bits%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Bits application servers pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Bits%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Bits%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Bits application servers pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Bits%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Bits caches eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Bits%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456249">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>32</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>4</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>29%, 28%, 25%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>30%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Bits%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Bits%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456249&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Bits caches eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Bits%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Bits%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456249&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Bits caches eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Bits%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Bits caches esams</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Bits%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456260">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>48</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>4</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>18%, 18%, 17%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>18%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Bits%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Bits%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456260&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Bits caches esams LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Bits%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Bits%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456260&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Bits caches esams MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Bits%20caches%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Bits caches pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Bits%20caches%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>24</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>4</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>1%, 1%, 1%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>1%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Bits%20caches%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Bits%20caches%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Bits caches pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Bits%20caches%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Bits%20caches%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Bits caches pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Ceph%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Ceph eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Ceph%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456254">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>300</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>16</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>12%, 11%, 12%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>11%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Ceph%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Ceph%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456254&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Ceph eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Ceph%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Ceph%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456254&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Ceph eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Fundraising%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Fundraising eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Fundraising%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456249">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>184</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>17</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>7%, 6%, 6%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>7%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Fundraising%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Fundraising%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456249&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Fundraising eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Fundraising%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Fundraising%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456249&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Fundraising eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Fundraising%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Fundraising pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Fundraising%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456250">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>108</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>8</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>0%, 1%, 1%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Fundraising%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Fundraising%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456250&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Fundraising pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Fundraising%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Fundraising%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456250&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Fundraising pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Glusterfs%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Glusterfs cluster pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Glusterfs%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>16</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>2</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>2%, 2%, 2%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>2%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Glusterfs%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Glusterfs%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Glusterfs cluster pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Glusterfs%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Glusterfs%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Glusterfs cluster pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Image%20scalers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Image scalers eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Image%20scalers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456259">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>192</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>8</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>10%, 10%, 8%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>11%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Image%20scalers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Image%20scalers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456259&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Image scalers eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Image%20scalers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Image%20scalers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456259&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Image scalers eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Image%20scalers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Image scalers pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Image%20scalers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>96</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>6</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>0%, 0%, 0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Image%20scalers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Image%20scalers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Image scalers pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Image%20scalers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Image%20scalers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Image scalers pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Jobrunners%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Jobrunners eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Jobrunners%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>372</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>16</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>27%, 27%, 25%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>27%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Jobrunners%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Jobrunners%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Jobrunners eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Jobrunners%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Jobrunners%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Jobrunners eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Jobrunners%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Jobrunners pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Jobrunners%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>372</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>16</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>0%, 0%, 0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Jobrunners%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Jobrunners%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Jobrunners pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Jobrunners%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Jobrunners%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Jobrunners pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=LVS%20loadbalancers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>LVS loadbalancers eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=LVS%20loadbalancers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456108">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>88</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>6</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>2%, 2%, 2%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>2%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:15</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=LVS%20loadbalancers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=LVS%20loadbalancers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456108&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="LVS loadbalancers eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=LVS%20loadbalancers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=LVS%20loadbalancers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456108&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="LVS loadbalancers eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=LVS%20loadbalancers%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>LVS loadbalancers esams</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=LVS%20loadbalancers%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>16</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>4</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>7%, 9%, 8%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>5%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=LVS%20loadbalancers%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=LVS%20loadbalancers%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="LVS loadbalancers esams LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=LVS%20loadbalancers%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=LVS%20loadbalancers%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="LVS loadbalancers esams MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=LVS%20loadbalancers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>LVS loadbalancers pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=LVS%20loadbalancers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370455317">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>40</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>6</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>3%, 3%, 2%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>3%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:01</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=LVS%20loadbalancers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=LVS%20loadbalancers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370455317&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="LVS loadbalancers pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=LVS%20loadbalancers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=LVS%20loadbalancers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370455317&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="LVS loadbalancers pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Labs%20NFS%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Labs NFS cluster pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Labs%20NFS%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456259">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>8</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>1</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>3%, 3%, 4%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>3%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Labs%20NFS%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Labs%20NFS%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456259&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Labs NFS cluster pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Labs%20NFS%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Labs%20NFS%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456259&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Labs NFS cluster pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Memcached%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Memcached eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Memcached%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456259">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>288</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>16</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>8%, 8%, 9%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>9%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Memcached%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Memcached%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456259&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Memcached eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Memcached%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Memcached%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456259&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Memcached eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Memcached%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Memcached pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Memcached%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>216</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>16</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>0%, 0%, 0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Memcached%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Memcached%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Memcached pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Memcached%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Memcached%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Memcached pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Miscellaneous%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Miscellaneous eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Miscellaneous%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456256">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>592</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>51</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>1</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>10%, 11%, 7%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>8%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Miscellaneous%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Miscellaneous%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456256&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Miscellaneous eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Miscellaneous%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Miscellaneous%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456256&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Miscellaneous eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Miscellaneous%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Miscellaneous esams</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Miscellaneous%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456259">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>118</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>32</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>2%, 2%, 2%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>2%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Miscellaneous%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Miscellaneous%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456259&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Miscellaneous esams LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Miscellaneous%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Miscellaneous%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456259&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Miscellaneous esams MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Miscellaneous%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Miscellaneous pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Miscellaneous%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>432</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>51</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>16%, 16%, 16%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>17%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Miscellaneous%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Miscellaneous%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Miscellaneous pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Miscellaneous%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Miscellaneous%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Miscellaneous pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Mobile%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Mobile caches eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Mobile%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>32</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>4</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>33%, 28%, 26%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>37%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Mobile%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Mobile%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Mobile caches eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Mobile%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Mobile%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Mobile caches eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=MySQL%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>MySQL eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=MySQL%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456254">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>816</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>58</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>11%, 11%, 10%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>11%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=MySQL%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=MySQL%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456254&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="MySQL eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=MySQL%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=MySQL%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456254&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="MySQL eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=MySQL%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>MySQL pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=MySQL%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456248">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>576</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>52</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>5%, 5%, 5%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>5%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=MySQL%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=MySQL%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456248&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="MySQL pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=MySQL%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=MySQL%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456248&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="MySQL pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=PDF%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>PDF servers pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=PDF%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456258">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>40</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>3</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>56%, 57%, 49%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>51%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=PDF%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=PDF%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456258&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="PDF servers pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=PDF%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=PDF%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456258&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="PDF servers pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Parsoid%20Varnish%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Parsoid Varnish eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Parsoid%20Varnish%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370385300">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>14</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>2</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>2%, 1%, 1%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-04 22:35</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Parsoid%20Varnish%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Parsoid%20Varnish%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370385300&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Parsoid Varnish eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Parsoid%20Varnish%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Parsoid%20Varnish%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370385300&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Parsoid Varnish eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Parsoid%20Varnish%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Parsoid Varnish pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Parsoid%20Varnish%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>12</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>2</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>104%, 103%, 98%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>108%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Parsoid%20Varnish%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Parsoid%20Varnish%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Parsoid Varnish pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Parsoid%20Varnish%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Parsoid%20Varnish%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Parsoid Varnish pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Parsoid%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Parsoid eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Parsoid%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456263">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>288</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>24</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>1%, 1%, 0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>1%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Parsoid%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Parsoid%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456263&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Parsoid eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Parsoid%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Parsoid%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456263&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Parsoid eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Parsoid%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Parsoid pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Parsoid%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>32</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>5</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>1%, 0%, 0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Parsoid%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Parsoid%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Parsoid pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Parsoid%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Parsoid%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Parsoid pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Redis%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Redis eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Redis%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456250">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>24</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>2</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>2%, 2%, 2%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>2%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Redis%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Redis%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456250&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Redis eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Redis%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Redis%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456250&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Redis eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=SSL%20cluster%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>SSL cluster eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=SSL%20cluster%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>32</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>4</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>24%, 24%, 25%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>24%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=SSL%20cluster%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=SSL%20cluster%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="SSL cluster eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=SSL%20cluster%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=SSL%20cluster%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="SSL cluster eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=SSL%20cluster%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>SSL cluster esams</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=SSL%20cluster%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456253">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>72</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>3</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>11%, 11%, 11%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>12%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=SSL%20cluster%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=SSL%20cluster%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456253&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="SSL cluster esams LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=SSL%20cluster%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=SSL%20cluster%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456253&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="SSL cluster esams MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=SSL%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>SSL cluster pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=SSL%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456253">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>96</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>4</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>0%, 0%, 0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=SSL%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=SSL%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456253&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="SSL cluster pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=SSL%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=SSL%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456253&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="SSL cluster pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Search%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Search eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Search%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456261">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>588</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>25</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>6%, 6%, 6%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>6%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Search%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Search%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456261&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Search eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Search%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Search%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456261&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Search eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Search%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Search pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Search%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>280</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>25</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>2%, 2%, 2%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>2%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Search%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Search%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Search pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Search%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Search%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Search pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Swift%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Swift pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Swift%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456249">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>180</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>16</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>128%, 129%, 126%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>128%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Swift%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Swift%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456249&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Swift pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Swift%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Swift%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456249&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Swift pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Text%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Text caches esams</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Text%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456256">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>4</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>1</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>6%, 6%, 5%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>6%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Text%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Text%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456256&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Text caches esams LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Text%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Text%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456256&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Text caches esams MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Text%20squids%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Text squids eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Text%20squids%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>152</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>20</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>7%, 8%, 8%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>8%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Text%20squids%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Text%20squids%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Text squids eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Text%20squids%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Text%20squids%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Text squids eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Text%20squids%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Text squids pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Text%20squids%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456260">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>68</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>18</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>4%, 4%, 5%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>5%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Text%20squids%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Text%20squids%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456260&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Text squids pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Text%20squids%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Text%20squids%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456260&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Text squids pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Upload%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Upload caches eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Upload%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>136</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>17</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>83%, 87%, 104%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>83%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Upload%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Upload%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Upload caches eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Upload%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Upload%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Upload caches eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Upload%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Upload caches esams</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Upload%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>96</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>8</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>49%, 51%, 56%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>50%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Upload%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Upload%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Upload caches esams LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Upload%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Upload%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Upload caches esams MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Upload%20squids%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Upload squids esams</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Upload%20squids%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456256">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B></B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>0%, 0%, 0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Upload%20squids%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Upload%20squids%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456256&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Upload squids esams LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Upload%20squids%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Upload%20squids%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456256&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Upload squids esams MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Upload%20squids%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Upload squids pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Upload%20squids%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456261">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>84</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>24</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>2%, 2%, 2%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>3%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Upload%20squids%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Upload%20squids%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456261&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Upload squids pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Upload%20squids%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Upload%20squids%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456261&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Upload squids pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Video%20scalers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Video scalers eqiad</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Video%20scalers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>24</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>2</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>13%, 18%, 9%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>9%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Video%20scalers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Video%20scalers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Video scalers eqiad LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Video%20scalers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Video%20scalers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Video scalers eqiad MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Video%20scalers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Video scalers pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Video%20scalers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>24</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>2</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>1%, 0%, 0%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>1%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Video%20scalers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Video%20scalers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Video scalers pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Video%20scalers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Video%20scalers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Video scalers pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+<tr>
+  <td class=cluster colspan="3">
+    <a href="./?c=Virtualization%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><strong>Virtualization cluster pmtpa</strong></a> <FONT SIZE="-2"><a href="./?p=2&amp;c=Virtualization%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255">(physical view)</a></FONT>
+  </td>
+</tr>
+
+<tr>
+<td align="LEFT" valign="TOP">
+<table cellspacing="1" cellpadding="1" width="100%" border="0">
+ <tr><td>CPUs Total:</td><td align="left"><B>192</B></td></tr>
+ <tr><td width="80%">Hosts up:</td><td align="left"><B>8</B></td></tr>
+ <tr><td>Hosts down:</td><td align="left"><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>49%, 50%, 53%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Avg Utilization (last hour):</font><br>&nbsp;&nbsp;<b>48%</b></td></tr>
+ <tr><td class="footer" colspan="2"><font size="-1">Localtime:</font><br>&nbsp;&nbsp;2013-06-05 18:17</td></tr>
+</table>
+</td>
+
+
+
+<td>
+ <table align="center" border="0">
+  <tr>
+
+      <td>
+      <a href="./?c=Virtualization%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Virtualization%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=load_report&amp;z=medium&amp;r=hour"
+             alt="Virtualization cluster pmtpa LOAD" border="0" />
+      </a>
+      </td>
+
+      <td>
+      <a href="./?c=Virtualization%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2">
+        <img src="./graph.php?c=Virtualization%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370456255&amp;g=network_report&amp;z=medium&amp;r=hour"
+             alt="Virtualization cluster pmtpa MEM" border="0" />
+      </a>
+      </td>
+
+  </tr>
+ </td>
+</table>
+
+
+
+
+
+</tr>
+
+</table>
+
+<table border="0" width="100%">
+<tr>
+  <td colspan="2" class="title">Snapshot of the Wikimedia Grid |
+    <font size="-1"><a href="./cluster_legend.html">Legend</a></font>
+  </td>
+</tr>
+</table>
+
+<center>
+<table cellspacing="12" cellpadding="2">
+<tr><td valign=bottom align=center><b>API application servers eqiad</b></td>
+<td valign=bottom align=center><b>API application servers pmtpa</b></td>
+<td valign=bottom align=center><b>Analytics cluster eqiad</b></td>
+<td valign=bottom align=center><b>Application servers eqiad</b></td>
+<td valign=bottom align=center><b>Application servers pmtpa</b></td>
+</tr>
+<tr><td valign=top align=center><a href="./?c=API%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="API application servers eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=API%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="API application servers pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Analytics%20cluster%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Analytics cluster eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Application servers eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Application servers pmtpa" border=0 align=top></a></td>
+</tr>
+<tr><td valign=bottom align=center><b>Bits application servers eqiad</b></td>
+<td valign=bottom align=center><b>Bits application servers pmtpa</b></td>
+<td valign=bottom align=center><b>Bits caches eqiad</b></td>
+<td valign=bottom align=center><b>Bits caches esams</b></td>
+<td valign=bottom align=center><b>Bits caches pmtpa</b></td>
+</tr>
+<tr><td valign=top align=center><a href="./?c=Bits%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Bits application servers eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Bits%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Bits application servers pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Bits%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_25-49.jpg" alt="Bits caches eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Bits%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Bits caches esams" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Bits%20caches%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Bits caches pmtpa" border=0 align=top></a></td>
+</tr>
+<tr><td valign=bottom align=center><b>Ceph eqiad</b></td>
+<td valign=bottom align=center><b>Fundraising eqiad</b></td>
+<td valign=bottom align=center><b>Fundraising pmtpa</b></td>
+<td valign=bottom align=center><b>Glusterfs cluster pmtpa</b></td>
+<td valign=bottom align=center><b>Image scalers eqiad</b></td>
+</tr>
+<tr><td valign=top align=center><a href="./?c=Ceph%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Ceph eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Fundraising%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Fundraising eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Fundraising%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Fundraising pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Glusterfs%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Glusterfs cluster pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Image%20scalers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Image scalers eqiad" border=0 align=top></a></td>
+</tr>
+<tr><td valign=bottom align=center><b>Image scalers pmtpa</b></td>
+<td valign=bottom align=center><b>Jobrunners eqiad</b></td>
+<td valign=bottom align=center><b>Jobrunners pmtpa</b></td>
+<td valign=bottom align=center><b>LVS loadbalancers eqiad</b></td>
+<td valign=bottom align=center><b>LVS loadbalancers esams</b></td>
+</tr>
+<tr><td valign=top align=center><a href="./?c=Image%20scalers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Image scalers pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Jobrunners%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Jobrunners eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Jobrunners%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Jobrunners pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=LVS%20loadbalancers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="LVS loadbalancers eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=LVS%20loadbalancers%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="LVS loadbalancers esams" border=0 align=top></a></td>
+</tr>
+<tr><td valign=bottom align=center><b>LVS loadbalancers pmtpa</b></td>
+<td valign=bottom align=center><b>Labs NFS cluster pmtpa</b></td>
+<td valign=bottom align=center><b>Memcached eqiad</b></td>
+<td valign=bottom align=center><b>Memcached pmtpa</b></td>
+<td valign=bottom align=center><b>Miscellaneous eqiad</b></td>
+</tr>
+<tr><td valign=top align=center><a href="./?c=LVS%20loadbalancers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="LVS loadbalancers pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Labs%20NFS%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Labs NFS cluster pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Memcached%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Memcached eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Memcached%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Memcached pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Miscellaneous%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Miscellaneous eqiad" border=0 align=top></a></td>
+</tr>
+<tr><td valign=bottom align=center><b>Miscellaneous esams</b></td>
+<td valign=bottom align=center><b>Miscellaneous pmtpa</b></td>
+<td valign=bottom align=center><b>Mobile caches eqiad</b></td>
+<td valign=bottom align=center><b>MySQL eqiad</b></td>
+<td valign=bottom align=center><b>MySQL pmtpa</b></td>
+</tr>
+<tr><td valign=top align=center><a href="./?c=Miscellaneous%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Miscellaneous esams" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Miscellaneous%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Miscellaneous pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Mobile%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_25-49.jpg" alt="Mobile caches eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=MySQL%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="MySQL eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=MySQL%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="MySQL pmtpa" border=0 align=top></a></td>
+</tr>
+<tr><td valign=bottom align=center><b>PDF servers pmtpa</b></td>
+<td valign=bottom align=center><b>Parsoid Varnish eqiad</b></td>
+<td valign=bottom align=center><b>Parsoid Varnish pmtpa</b></td>
+<td valign=bottom align=center><b>Parsoid eqiad</b></td>
+<td valign=bottom align=center><b>Parsoid pmtpa</b></td>
+</tr>
+<tr><td valign=top align=center><a href="./?c=PDF%20servers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_25-49.jpg" alt="PDF servers pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Parsoid%20Varnish%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Parsoid Varnish eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Parsoid%20Varnish%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_75-100.jpg" alt="Parsoid Varnish pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Parsoid%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Parsoid eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Parsoid%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Parsoid pmtpa" border=0 align=top></a></td>
+</tr>
+<tr><td valign=bottom align=center><b>Redis eqiad</b></td>
+<td valign=bottom align=center><b>SSL cluster eqiad</b></td>
+<td valign=bottom align=center><b>SSL cluster esams</b></td>
+<td valign=bottom align=center><b>SSL cluster pmtpa</b></td>
+<td valign=bottom align=center><b>Search eqiad</b></td>
+</tr>
+<tr><td valign=top align=center><a href="./?c=Redis%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Redis eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=SSL%20cluster%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_25-49.jpg" alt="SSL cluster eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=SSL%20cluster%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="SSL cluster esams" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=SSL%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="SSL cluster pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Search%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Search eqiad" border=0 align=top></a></td>
+</tr>
+<tr><td valign=bottom align=center><b>Search pmtpa</b></td>
+<td valign=bottom align=center><b>Swift pmtpa</b></td>
+<td valign=bottom align=center><b>Text caches esams</b></td>
+<td valign=bottom align=center><b>Text squids eqiad</b></td>
+<td valign=bottom align=center><b>Text squids pmtpa</b></td>
+</tr>
+<tr><td valign=top align=center><a href="./?c=Search%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Search pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Swift%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_overloaded.jpg" alt="Swift pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Text%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Text caches esams" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Text%20squids%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Text squids eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Text%20squids%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Text squids pmtpa" border=0 align=top></a></td>
+</tr>
+<tr><td valign=bottom align=center><b>Upload caches eqiad</b></td>
+<td valign=bottom align=center><b>Upload caches esams</b></td>
+<td valign=bottom align=center><b>Upload squids esams</b></td>
+<td valign=bottom align=center><b>Upload squids pmtpa</b></td>
+<td valign=bottom align=center><b>Video scalers eqiad</b></td>
+</tr>
+<tr><td valign=top align=center><a href="./?c=Upload%20caches%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_overloaded.jpg" alt="Upload caches eqiad" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Upload%20caches%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_50-74.jpg" alt="Upload caches esams" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Upload%20squids%20esams&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Upload squids esams" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Upload%20squids%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Upload squids pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Video%20scalers%20eqiad&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Video scalers eqiad" border=0 align=top></a></td>
+</tr>
+<tr><td valign=bottom align=center><b>Video scalers pmtpa</b></td>
+<td valign=bottom align=center><b>Virtualization cluster pmtpa</b></td>
+</tr>
+<tr><td valign=top align=center><a href="./?c=Video%20scalers%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_0-24.jpg" alt="Video scalers pmtpa" border=0 align=top></a></td>
+<td valign=top align=center><a href="./?c=Virtualization%20cluster%20pmtpa&amp;m=cpu_report&amp;r=hour&amp;s=by%20name&amp;hc=4&amp;mc=2"><img src="./templates/default/images/cluster_50-74.jpg" alt="Virtualization cluster pmtpa" border=0 align=top></a></td>
+</tr>
+
+</table>
+</center>
+
+<!-- Begin footer.tpl -->
+</form> <!-- ganglia-form -->
+</div> <!-- tabs-main -->
+
+<div id="tabs-search">
+  Search term matches any number of metrics and hosts. For example type web or disk; wait a split second, and a drop down menu will show up with choices.
+  <!-- Uses LiveSearch from http://andreaslagerkvist.com/jquery/live-search/ -->
+  <div id="metric-search">
+    <form method="post" action="/search/">
+      <p>
+	<label>
+	    <small>Search as you type</small><br />
+	    <input type="text" name="q" id="search-field-q" size="60" placeholder="Search as you type" on />
+	</label>
+      </p>
+    </form>
+  </div>
+</div> 
+
+<div id="create-new-view-dialog" title="Create new view">
+  <div id="create-new-view-layer">
+    <form id="create_view_form">
+      <input type="hidden" name="create_view" value="1">
+      <fieldset>
+	 <label for="name">View Name</label>
+	 <input type="text" name="view_name" id="view_name" class="text ui-widget-content ui-corner-all" />
+         <center><button onclick="createView(); return false;">Create</button></center>
+      </fieldset>
+    </form>
+  </div>
+  <div id="create-new-view-confirmation-layer"></div>
+</div>
+
+<div id="tabs-mobile"></div>
+
+<div id="tabs-autorotation">
+Invoke automatic rotation system. Automatic rotation rotates all of the graphs/metrics specified in a view waiting 
+30 seconds in between each. This will run as long as you have this page open.
+<p>
+Please select the view you want to rotate.</p>
+  <div id="tabs-autorotation-chooser">
+Loading view, please wait...<img src="img/spinner.gif" />
+  </div>
+</div>
+
+<div id="tabs-livedashboard">
+Live dashboard provides you with an overview of all view metrics in a compact format. Data updates every 15 seconds.
+Only those elements that contain a metric or graph report are supported. Aggregate graphs will not be included.
+<p>
+You can get more graphs per page by using your browser zoom functionality.
+<p>
+Please select the view you want to view</p>
+  <div id="tabs-livedashboard-chooser">
+Loading view, please wait...<img src="img/spinner.gif" />
+  </div>
+</div>
+
+
+<hr />
+<div align="center">
+<font size="-1" class="footer">
+Ganglia Web Frontend version 3.5.7
+<a href="http://ganglia.sourceforge.net/downloads.php?component=ganglia-webfrontend&amp;version=3.5.7">Check for Updates.</a><br />
+
+Ganglia Web Backend <i>(gmetad)</i> version 3.3.5
+<a href="http://ganglia.sourceforge.net/downloads.php?component=gmetad&amp;version=3.3.5">Check for Updates.</a><br />
+
+Downloading and parsing ganglia's XML tree took 0.1687s.<br />
+Images created with <a href="http://www.rrdtool.org/">RRDtool</a> version 1.3.8.<br />
+<a href="http://dwoo.org/">Powered by Dwoo</a> 1.1.1.<br />
+</font>
+</div>
+</div> <!-- div-tabs -->
+</BODY>
+<!-- End footer.tpl -->
+</HTML>
+

@@ -1,0 +1,430 @@
+<!-- Begin header.tpl -->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Ganglia:: Wikimedia Grid Tree</title>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+<link type="text/css" href="css/smoothness/jquery-ui-1.9.1.custom.min.css" rel="stylesheet" />
+<link type="text/css" href="css/jquery.liveSearch.css" rel="stylesheet" />
+<link type="text/css" href="css/jquery.multiselect.css" rel="stylesheet" />
+<link type="text/css" href="css/jquery.flot.events.css" rel="stylesheet" />
+<link type="text/css" href="./styles.css" rel="stylesheet" />
+<script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.9.1.custom.min.js"></script>
+<script type="text/javascript" src="js/jquery.livesearch.min.js"></script>
+<script type="text/javascript" src="js/ganglia.js"></script>
+<script type="text/javascript" src="js/jquery.gangZoom.js"></script>
+<script type="text/javascript" src="js/jquery.cookie.js"></script>
+<script type="text/javascript" src="js/jquery-ui-timepicker-addon.js"></script>
+<script type="text/javascript" src="js/jquery.ba-bbq.min.js"></script>
+<script type="text/javascript" src="js/combobox.js"></script>
+<script type="text/javascript" src="js/jquery.scrollTo-1.4.2-min.js"></script>
+<script type="text/javascript" src="js/jquery.buttonsetv.js"></script>
+<script type="text/javascript">
+    var server_utc_offset=0;
+    
+    var g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+
+    function refreshHeader() {
+      $.get('header.php?date_only=1', function(data) {
+        var title = $("#page_title").text();
+        var l = title.lastIndexOf(" for ");
+        title = title.substring(0, l);
+        title += " for " + data;
+        $("#page_title").text(title);
+        });
+    }
+
+    function refresh() {
+      var selected_tab = $("#selected_tab").val();
+      if (selected_tab == "agg") {
+        refreshAggregateGraph();
+        g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+      } else if (selected_tab == "v") {
+        refreshHeader();
+        if ($.isFunction(window.refreshView)) {
+          refreshView();
+          g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+        } else if ($.isFunction(window.refreshDecomposeGraph)) {
+          refreshDecomposeGraph();
+          g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+        } else
+          ganglia_form.submit();
+      } else if (selected_tab == "ev") {
+        refreshOverlayEvent();
+        g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+      } else if (selected_tab == "m") {
+        if ($.isFunction(window.refreshClusterView)) {
+          refreshHeader();
+          refreshClusterView();
+          g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+        } else if ($.isFunction(window.refreshHostView)) {
+          refreshHeader();
+          refreshHostView();
+          g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+        } else
+          ganglia_form.submit();
+      } else
+        ganglia_form.submit();
+    }
+
+    $(function() {
+      g_overlay_events = ($("#overlay_events").val() == "true");
+
+      g_tabIndex = new Object();
+      g_tabName = [];
+      var tabName = ["m", "s", "v", "agg", "ch", "ev", "rot", "mob"];
+      var j = 0;
+      for (var i in tabName) {
+        if (tabName[i] == "ev" && !g_overlay_events)
+          continue;
+        g_tabIndex[tabName[i]] = j++;
+        g_tabName.push(tabName[i]);
+      }
+
+      // Follow tab's URL instead of loading its content via ajax
+      var tabs = $("#tabs");
+      if (tabs[0]) {
+        tabs.tabs();
+        // Restore previously selected tab
+        var selected_tab = $("#selected_tab").val();
+        //alert("selected_tab = " + selected_tab);
+        if (typeof g_tabIndex[selected_tab] != 'undefined') {
+          try {
+            //alert("Selecting tab: " + selected_tab);
+            tabs.tabs("select", g_tabIndex[selected_tab]);
+            if (selected_tab == "rot")
+              autoRotationChooser();
+          } catch (err) {
+            try {
+              alert("Error(ganglia.js): Unable to select tab: " + 
+                    selected_tab + ". " + err.getDescription());
+            } catch (err) {
+              // If we can't even show the error, fail silently.
+            }
+          }
+        }
+
+        tabs.bind("tabsselect", function(event, ui) {
+          $("#selected_tab").val(g_tabName[ui.index]);
+          if (g_tabName[ui.index] != "mob")
+            $.cookie("ganglia-selected-tab-" + window.name, ui.index);
+          if (ui.index == g_tabIndex["m"] ||
+              ui.index == g_tabIndex["v"] ||
+              ui.index == g_tabIndex["ch"])
+            ganglia_form.submit();
+        });
+      }
+    });
+
+    $(function() {
+      $("#metrics-picker").combobox();
+
+      $("#sort_menu").toggle(); 
+
+      $(".header_btn").button();
+    });
+
+  $(function () {
+
+    done = function done(startTime, endTime) {
+            setStartAndEnd(startTime, endTime);
+            document.forms['ganglia_form'].submit();
+    }
+
+    cancel = function (startTime, endTime) {
+            setStartAndEnd(startTime, endTime);
+    }
+
+    defaults = {
+        startTime: 1339001660,
+        endTime: 1370451260,
+        done: done,
+        cancel: cancel
+    }
+
+    $(".host_small_zoomable").gangZoom($.extend({
+        paddingLeft: 67,
+        paddingRight: 30,
+        paddingTop: 38,
+        paddingBottom: 25
+    }, defaults));
+
+    $(".host_medium_zoomable").gangZoom($.extend({
+        paddingLeft: 67,
+        paddingRight: 30,
+        paddingTop: 38,
+        paddingBottom: 40
+    }, defaults));
+
+    $(".host_default_zoomable").gangZoom($.extend({
+        paddingLeft: 66,
+        paddingRight: 30,
+        paddingTop: 37,
+        paddingBottom: 50
+    }, defaults));
+
+    $(".host_large_zoomable").gangZoom($.extend({
+        paddingLeft: 66,
+        paddingRight: 29,
+        paddingTop: 37,
+        paddingBottom: 56
+    }, defaults));
+
+    $(".cluster_zoomable").gangZoom($.extend({
+        paddingLeft: 67,
+        paddingRight: 30,
+        paddingTop: 37,
+        paddingBottom: 50
+    }, defaults));
+
+    function rrdDateTimeString(date) {
+      return (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + date.getHours() + ":" + date.getMinutes();
+    }
+
+    function setStartAndEnd(startTime, endTime) {
+        // we're getting local start/end times.
+
+        // getTimezoneOffset returns negative values east of UTC,
+        // which is the opposite of PHP. we want negative values to the west.
+        var local_offset = new Date().getTimezoneOffset() * 60 * -1;
+        var delta = local_offset - server_utc_offset;
+        var date = new Date((Math.floor(startTime) - delta) * 1000);
+        $("#datepicker-cs").val(rrdDateTimeString(date));
+        date = new Date((Math.floor(endTime) - delta) * 1000);
+        $("#datepicker-ce").val(rrdDateTimeString(date));
+    }
+
+    initShowEvent();
+    initTimeShift();
+  });
+
+
+</script>
+
+</head>
+<body style="background-color: #ffffff;" onunload="g_refresh_timer=null">
+
+
+
+
+<div id="tabs">
+<ul>
+  <li><a href="#tabs-main">Main</a></li>
+  <li><a href="#tabs-search">Search</a></li>
+  <li><a href="#tabs-main">Views</a></li>
+  <li><a href="aggregate_graphs.php">Aggregate Graphs</a></li>
+  <li><a href="#tabs-main">Compare Hosts</a></li>
+  <li><a href="events.php">Events</a></li>
+
+  <li><a href="#tabs-autorotation" onclick="autoRotationChooser();">Automatic Rotation</a></li>
+  <li><a href="#tabs-livedashboard" onclick="liveDashboardChooser();">Live Dashboard</a></li>  
+  <li><a href="#tabs-mobile" onclick="window.location.href='mobile.php';">Mobile</a></li>
+</ul>
+
+<div id="tabs-main">
+<form action="./" method="GET" name="ganglia_form">
+  <div style="background-color:#dddddd;padding:5px;">
+     <big style="float:left;"><b id="page_title">Wikimedia Grid Tree for Wed, 05 Jun 2013 16:54:20 +0000</b></big><input style="float:right;" class="header_btn" type="submit" value="Get Fresh Data"/><div style="clear:both"></div>
+  </div>
+  <div style="padding:5px 5px 0 5px;">
+    <div style="float:left;" id="range_menu" class="nobr">Last&nbsp;&nbsp;<input OnChange="ganglia_form.submit();" type="radio" id="range-hour" name="r" value="hour" /><label for="range-hour">hour</label><input OnChange="ganglia_form.submit();" type="radio" id="range-2hr" name="r" value="2hr" /><label for="range-2hr">2hr</label><input OnChange="ganglia_form.submit();" type="radio" id="range-4hr" name="r" value="4hr" /><label for="range-4hr">4hr</label><input OnChange="ganglia_form.submit();" type="radio" id="range-day" name="r" value="day" /><label for="range-day">day</label><input OnChange="ganglia_form.submit();" type="radio" id="range-week" name="r" value="week" /><label for="range-week">week</label><input OnChange="ganglia_form.submit();" type="radio" id="range-month" name="r" value="month" /><label for="range-month">month</label><input OnChange="ganglia_form.submit();" type="radio" id="range-year" name="r" value="year" checked="checked"/><label for="range-year">year</label><input OnChange="ganglia_form.submit();" type="radio" id="range-job" name="r" value="job" /><label for="range-job">job</label></div>
+    <div style="float:left;" id="custom_range_menu"></div>
+    <div style="float:right;">&nbsp;&nbsp;</div>
+    <div style="clear:both;"></div>
+  </div>
+  <div id="sort_menu" style="padding:5px 5px 0 5px;">
+   Metric&nbsp;&nbsp; <select name="m" id="metrics-picker"></select>&nbsp;&nbsp;
+     
+  </div>
+  <div id="sort_menu" style="padding:5px 5px 0 5px;">
+    <b><a href="./?m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Wikimedia Grid</a></b> <b>&gt;</b>
+<select name="c" OnChange="ganglia_form.submit();">
+<option value="">--Choose a Source
+<option value="API%20application%20servers%20eqiad">API application servers eqiad
+<option value="API%20application%20servers%20pmtpa">API application servers pmtpa
+<option value="Analytics%20cluster%20eqiad">Analytics cluster eqiad
+<option value="Application%20servers%20eqiad">Application servers eqiad
+<option value="Application%20servers%20pmtpa">Application servers pmtpa
+<option value="Bits%20application%20servers%20eqiad">Bits application servers eqiad
+<option value="Bits%20application%20servers%20pmtpa">Bits application servers pmtpa
+<option value="Bits%20caches%20eqiad">Bits caches eqiad
+<option value="Bits%20caches%20esams">Bits caches esams
+<option value="Bits%20caches%20pmtpa">Bits caches pmtpa
+<option value="Ceph%20eqiad">Ceph eqiad
+<option value="Fundraising%20eqiad">Fundraising eqiad
+<option value="Fundraising%20pmtpa">Fundraising pmtpa
+<option value="Glusterfs%20cluster%20pmtpa">Glusterfs cluster pmtpa
+<option value="Image%20scalers%20eqiad">Image scalers eqiad
+<option value="Image%20scalers%20pmtpa">Image scalers pmtpa
+<option value="Jobrunners%20eqiad">Jobrunners eqiad
+<option value="Jobrunners%20pmtpa">Jobrunners pmtpa
+<option value="LVS%20loadbalancers%20eqiad">LVS loadbalancers eqiad
+<option value="LVS%20loadbalancers%20esams">LVS loadbalancers esams
+<option value="LVS%20loadbalancers%20pmtpa">LVS loadbalancers pmtpa
+<option value="Labs%20NFS%20cluster%20pmtpa">Labs NFS cluster pmtpa
+<option value="Memcached%20eqiad">Memcached eqiad
+<option value="Memcached%20pmtpa">Memcached pmtpa
+<option value="Miscellaneous%20eqiad">Miscellaneous eqiad
+<option value="Miscellaneous%20esams">Miscellaneous esams
+<option value="Miscellaneous%20pmtpa">Miscellaneous pmtpa
+<option value="Mobile%20caches%20eqiad">Mobile caches eqiad
+<option value="MySQL%20eqiad">MySQL eqiad
+<option value="MySQL%20pmtpa">MySQL pmtpa
+<option value="PDF%20servers%20pmtpa">PDF servers pmtpa
+<option value="Parsoid%20Varnish%20eqiad">Parsoid Varnish eqiad
+<option value="Parsoid%20Varnish%20pmtpa">Parsoid Varnish pmtpa
+<option value="Parsoid%20eqiad">Parsoid eqiad
+<option value="Parsoid%20pmtpa">Parsoid pmtpa
+<option value="Redis%20eqiad">Redis eqiad
+<option value="SSL%20cluster%20eqiad">SSL cluster eqiad
+<option value="SSL%20cluster%20esams">SSL cluster esams
+<option value="SSL%20cluster%20pmtpa">SSL cluster pmtpa
+<option value="Search%20eqiad">Search eqiad
+<option value="Search%20pmtpa">Search pmtpa
+<option value="Swift%20pmtpa">Swift pmtpa
+<option value="Text%20caches%20esams">Text caches esams
+<option value="Text%20squids%20eqiad">Text squids eqiad
+<option value="Text%20squids%20pmtpa">Text squids pmtpa
+<option value="Upload%20caches%20eqiad">Upload caches eqiad
+<option value="Upload%20caches%20esams">Upload caches esams
+<option value="Upload%20squids%20esams">Upload squids esams
+<option value="Upload%20squids%20pmtpa">Upload squids pmtpa
+<option value="Video%20scalers%20eqiad">Video scalers eqiad
+<option value="Video%20scalers%20pmtpa">Video scalers pmtpa
+<option value="Virtualization%20cluster%20pmtpa">Virtualization cluster pmtpa
+</select>
+<b></b>
+&nbsp;&nbsp;
+  </div>
+
+
+<input type="hidden" name="tab" id="selected_tab" value="m">
+<input type="hidden" id="vn" name="vn" value="">
+<input type="hidden" id="overlay_events" value="true">
+
+<hr size="1" noshade>
+<!-- End header.tpl -->
+<table border="0" width="100%">
+<tr>
+  <td class="title"><B>Wikimedia Grid Tree</b></td>
+</tr>
+</table>
+
+<div align="center">
+<table cellspacing="5" cellpadding="5" border="1">
+<tr>
+
+
+</tr>
+
+<tr>
+<td align="center">
+
+<table cellpadding="3" cellspacing="3" border="0">
+<tr>
+ <td colspan="53" class="self" align="center" style="border: thin solid rgb(47,47,47);">
+  Wikimedia
+ </td>
+</tr>
+
+<tr>
+ <td><a href="./?c=MySQL%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">MySQL pmtpa</a></td><td><a href="./?c=Application%20servers%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Application servers pmtpa</a></td><td><a href="./?c=Jobrunners%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Jobrunners pmtpa</a></td><td><a href="./?c=Virtualization%20cluster%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Virtualization cluster pmtpa</a></td><td><a href="./?c=Search%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Search eqiad</a></td><td><a href="./?c=Glusterfs%20cluster%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Glusterfs cluster pmtpa</a></td><td><a href="./?c=Parsoid%20Varnish%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Parsoid Varnish eqiad</a></td><td><a href="./?c=Miscellaneous%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Miscellaneous eqiad</a></td><td><a href="./?c=PDF%20servers%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">PDF servers pmtpa</a></td><td><a href="./?c=Text%20squids%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Text squids pmtpa</a></td><td><a href="./?c=Image%20scalers%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Image scalers eqiad</a></td><td><a href="./?c=MySQL%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">MySQL eqiad</a></td><td><a href="./?c=Application%20servers%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Application servers eqiad</a></td><td><a href="./?c=Fundraising%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Fundraising pmtpa</a></td><td><a href="./?c=Jobrunners%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Jobrunners eqiad</a></td><td><a href="./?c=Ceph%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Ceph eqiad</a></td><td><a href="./?c=Bits%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Bits application servers pmtpa</a></td><td><a href="./?c=Upload%20squids%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Upload squids pmtpa</a></td><td><a href="./?c=Analytics%20cluster%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Analytics cluster eqiad</a></td><td><a href="./?c=Upload%20squids%20esams&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Upload squids esams</a></td><td><a href="./?c=Labs%20NFS%20cluster%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Labs NFS cluster pmtpa</a></td><td><a href="./?c=Memcached%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Memcached pmtpa</a></td><td><a href="./?c=Text%20caches%20esams&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Text caches esams</a></td><td><a href="./?c=LVS%20loadbalancers%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">LVS loadbalancers pmtpa</a></td><td><a href="./?c=API%20application%20servers%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">API application servers pmtpa</a></td><td><a href="./?c=Bits%20caches%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Bits caches pmtpa</a></td><td><a href="./?c=Mobile%20caches%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Mobile caches eqiad</a></td><td><a href="./?c=Parsoid%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Parsoid pmtpa</a></td><td><a href="./?c=LVS%20loadbalancers%20esams&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">LVS loadbalancers esams</a></td><td><a href="./?c=Text%20squids%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Text squids eqiad</a></td><td><a href="./?c=Video%20scalers%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Video scalers pmtpa</a></td><td><a href="./?c=Bits%20caches%20esams&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Bits caches esams</a></td><td><a href="./?c=Upload%20caches%20esams&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Upload caches esams</a></td><td><a href="./?c=Fundraising%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Fundraising eqiad</a></td><td><a href="./?c=SSL%20cluster%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">SSL cluster pmtpa</a></td><td><a href="./?c=Bits%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Bits application servers eqiad</a></td><td><a href="./?c=Redis%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Redis eqiad</a></td><td><a href="./?c=SSL%20cluster%20esams&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">SSL cluster esams</a></td><td><a href="./?c=Search%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Search pmtpa</a></td><td><a href="./?c=Swift%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Swift pmtpa</a></td><td><a href="./?c=Memcached%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Memcached eqiad</a></td><td><a href="./?c=LVS%20loadbalancers%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">LVS loadbalancers eqiad</a></td><td><a href="./?c=API%20application%20servers%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">API application servers eqiad</a></td><td><a href="./?c=Bits%20caches%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Bits caches eqiad</a></td><td><a href="./?c=Parsoid%20Varnish%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Parsoid Varnish pmtpa</a></td><td><a href="./?c=Miscellaneous%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Miscellaneous pmtpa</a></td><td><a href="./?c=Upload%20caches%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Upload caches eqiad</a></td><td><a href="./?c=Parsoid%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Parsoid eqiad</a></td><td><a href="./?c=Video%20scalers%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Video scalers eqiad</a></td><td><a href="./?c=Miscellaneous%20esams&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Miscellaneous esams</a></td><td><a href="./?c=Image%20scalers%20pmtpa&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Image scalers pmtpa</a></td><td><a href="./?c=SSL%20cluster%20eqiad&amp;m=cpu_report&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">SSL cluster eqiad</a></td></tr></table>
+</tr>
+</table>
+
+</td>
+</tr>
+
+</table>
+</div>
+
+<p>
+<hr />
+<b>Legend:</b>
+<table cellspacing="5" border="0">
+<tr>
+<td class="self" width="20">&nbsp;</td><td>This Grid.</td>
+</tr>
+<tr>
+<td class="grid">&nbsp;</td><td>A Remote Grid.</td>
+</tr>
+</table>
+
+<!-- Begin footer.tpl -->
+</form> <!-- ganglia-form -->
+</div> <!-- tabs-main -->
+
+<div id="tabs-search">
+  Search term matches any number of metrics and hosts. For example type web or disk; wait a split second, and a drop down menu will show up with choices.
+  <!-- Uses LiveSearch from http://andreaslagerkvist.com/jquery/live-search/ -->
+  <div id="metric-search">
+    <form method="post" action="/search/">
+      <p>
+	<label>
+	    <small>Search as you type</small><br />
+	    <input type="text" name="q" id="search-field-q" size="60" placeholder="Search as you type" on />
+	</label>
+      </p>
+    </form>
+  </div>
+</div> 
+
+<div id="create-new-view-dialog" title="Create new view">
+  <div id="create-new-view-layer">
+    <form id="create_view_form">
+      <input type="hidden" name="create_view" value="1">
+      <fieldset>
+	 <label for="name">View Name</label>
+	 <input type="text" name="view_name" id="view_name" class="text ui-widget-content ui-corner-all" />
+         <center><button onclick="createView(); return false;">Create</button></center>
+      </fieldset>
+    </form>
+  </div>
+  <div id="create-new-view-confirmation-layer"></div>
+</div>
+
+<div id="tabs-mobile"></div>
+
+<div id="tabs-autorotation">
+Invoke automatic rotation system. Automatic rotation rotates all of the graphs/metrics specified in a view waiting 
+30 seconds in between each. This will run as long as you have this page open.
+<p>
+Please select the view you want to rotate.</p>
+  <div id="tabs-autorotation-chooser">
+Loading view, please wait...<img src="img/spinner.gif" />
+  </div>
+</div>
+
+<div id="tabs-livedashboard">
+Live dashboard provides you with an overview of all view metrics in a compact format. Data updates every 15 seconds.
+Only those elements that contain a metric or graph report are supported. Aggregate graphs will not be included.
+<p>
+You can get more graphs per page by using your browser zoom functionality.
+<p>
+Please select the view you want to view</p>
+  <div id="tabs-livedashboard-chooser">
+Loading view, please wait...<img src="img/spinner.gif" />
+  </div>
+</div>
+
+
+<hr />
+<div align="center">
+<font size="-1" class="footer">
+Ganglia Web Frontend version 3.5.7
+<a href="http://ganglia.sourceforge.net/downloads.php?component=ganglia-webfrontend&amp;version=3.5.7">Check for Updates.</a><br />
+
+Ganglia Web Backend <i>(gmetad)</i> version 3.3.5
+<a href="http://ganglia.sourceforge.net/downloads.php?component=gmetad&amp;version=3.3.5">Check for Updates.</a><br />
+
+Downloading and parsing ganglia's XML tree took 0.1675s.<br />
+Images created with <a href="http://www.rrdtool.org/">RRDtool</a> version 1.3.8.<br />
+<a href="http://dwoo.org/">Powered by Dwoo</a> 1.1.1.<br />
+</font>
+</div>
+</div> <!-- div-tabs -->
+</BODY>
+<!-- End footer.tpl -->
+</HTML>
+

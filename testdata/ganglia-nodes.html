@@ -1,0 +1,737 @@
+<!-- Begin header.tpl -->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Ganglia:: MySQL pmtpa Cluster Report</title>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+<link type="text/css" href="css/smoothness/jquery-ui-1.9.1.custom.min.css" rel="stylesheet" />
+<link type="text/css" href="css/jquery.liveSearch.css" rel="stylesheet" />
+<link type="text/css" href="css/jquery.multiselect.css" rel="stylesheet" />
+<link type="text/css" href="css/jquery.flot.events.css" rel="stylesheet" />
+<link type="text/css" href="./styles.css" rel="stylesheet" />
+<script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.9.1.custom.min.js"></script>
+<script type="text/javascript" src="js/jquery.livesearch.min.js"></script>
+<script type="text/javascript" src="js/ganglia.js"></script>
+<script type="text/javascript" src="js/jquery.gangZoom.js"></script>
+<script type="text/javascript" src="js/jquery.cookie.js"></script>
+<script type="text/javascript" src="js/jquery-ui-timepicker-addon.js"></script>
+<script type="text/javascript" src="js/jquery.ba-bbq.min.js"></script>
+<script type="text/javascript" src="js/combobox.js"></script>
+<script type="text/javascript" src="js/jquery.scrollTo-1.4.2-min.js"></script>
+<script type="text/javascript" src="js/jquery.buttonsetv.js"></script>
+<script type="text/javascript">
+    var server_utc_offset=0;
+    
+    var g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+
+    function refreshHeader() {
+      $.get('header.php?date_only=1', function(data) {
+        var title = $("#page_title").text();
+        var l = title.lastIndexOf(" for ");
+        title = title.substring(0, l);
+        title += " for " + data;
+        $("#page_title").text(title);
+        });
+    }
+
+    function refresh() {
+      var selected_tab = $("#selected_tab").val();
+      if (selected_tab == "agg") {
+        refreshAggregateGraph();
+        g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+      } else if (selected_tab == "v") {
+        refreshHeader();
+        if ($.isFunction(window.refreshView)) {
+          refreshView();
+          g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+        } else if ($.isFunction(window.refreshDecomposeGraph)) {
+          refreshDecomposeGraph();
+          g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+        } else
+          ganglia_form.submit();
+      } else if (selected_tab == "ev") {
+        refreshOverlayEvent();
+        g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+      } else if (selected_tab == "m") {
+        if ($.isFunction(window.refreshClusterView)) {
+          refreshHeader();
+          refreshClusterView();
+          g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+        } else if ($.isFunction(window.refreshHostView)) {
+          refreshHeader();
+          refreshHostView();
+          g_refresh_timer = setTimeout("refresh()", 300 * 1000);
+        } else
+          ganglia_form.submit();
+      } else
+        ganglia_form.submit();
+    }
+
+    $(function() {
+      g_overlay_events = ($("#overlay_events").val() == "true");
+
+      g_tabIndex = new Object();
+      g_tabName = [];
+      var tabName = ["m", "s", "v", "agg", "ch", "ev", "rot", "mob"];
+      var j = 0;
+      for (var i in tabName) {
+        if (tabName[i] == "ev" && !g_overlay_events)
+          continue;
+        g_tabIndex[tabName[i]] = j++;
+        g_tabName.push(tabName[i]);
+      }
+
+      // Follow tab's URL instead of loading its content via ajax
+      var tabs = $("#tabs");
+      if (tabs[0]) {
+        tabs.tabs();
+        // Restore previously selected tab
+        var selected_tab = $("#selected_tab").val();
+        //alert("selected_tab = " + selected_tab);
+        if (typeof g_tabIndex[selected_tab] != 'undefined') {
+          try {
+            //alert("Selecting tab: " + selected_tab);
+            tabs.tabs("select", g_tabIndex[selected_tab]);
+            if (selected_tab == "rot")
+              autoRotationChooser();
+          } catch (err) {
+            try {
+              alert("Error(ganglia.js): Unable to select tab: " + 
+                    selected_tab + ". " + err.getDescription());
+            } catch (err) {
+              // If we can't even show the error, fail silently.
+            }
+          }
+        }
+
+        tabs.bind("tabsselect", function(event, ui) {
+          $("#selected_tab").val(g_tabName[ui.index]);
+          if (g_tabName[ui.index] != "mob")
+            $.cookie("ganglia-selected-tab-" + window.name, ui.index);
+          if (ui.index == g_tabIndex["m"] ||
+              ui.index == g_tabIndex["v"] ||
+              ui.index == g_tabIndex["ch"])
+            ganglia_form.submit();
+        });
+      }
+    });
+
+    $(function() {
+      $("#metrics-picker").combobox();
+
+      
+
+      $(".header_btn").button();
+    });
+
+  $(function () {
+
+    done = function done(startTime, endTime) {
+            setStartAndEnd(startTime, endTime);
+            document.forms['ganglia_form'].submit();
+    }
+
+    cancel = function (startTime, endTime) {
+            setStartAndEnd(startTime, endTime);
+    }
+
+    defaults = {
+        startTime: 1339003116,
+        endTime: 1370452716,
+        done: done,
+        cancel: cancel
+    }
+
+    $(".host_small_zoomable").gangZoom($.extend({
+        paddingLeft: 67,
+        paddingRight: 30,
+        paddingTop: 38,
+        paddingBottom: 25
+    }, defaults));
+
+    $(".host_medium_zoomable").gangZoom($.extend({
+        paddingLeft: 67,
+        paddingRight: 30,
+        paddingTop: 38,
+        paddingBottom: 40
+    }, defaults));
+
+    $(".host_default_zoomable").gangZoom($.extend({
+        paddingLeft: 66,
+        paddingRight: 30,
+        paddingTop: 37,
+        paddingBottom: 50
+    }, defaults));
+
+    $(".host_large_zoomable").gangZoom($.extend({
+        paddingLeft: 66,
+        paddingRight: 29,
+        paddingTop: 37,
+        paddingBottom: 56
+    }, defaults));
+
+    $(".cluster_zoomable").gangZoom($.extend({
+        paddingLeft: 67,
+        paddingRight: 30,
+        paddingTop: 37,
+        paddingBottom: 50
+    }, defaults));
+
+    function rrdDateTimeString(date) {
+      return (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + date.getHours() + ":" + date.getMinutes();
+    }
+
+    function setStartAndEnd(startTime, endTime) {
+        // we're getting local start/end times.
+
+        // getTimezoneOffset returns negative values east of UTC,
+        // which is the opposite of PHP. we want negative values to the west.
+        var local_offset = new Date().getTimezoneOffset() * 60 * -1;
+        var delta = local_offset - server_utc_offset;
+        var date = new Date((Math.floor(startTime) - delta) * 1000);
+        $("#datepicker-cs").val(rrdDateTimeString(date));
+        date = new Date((Math.floor(endTime) - delta) * 1000);
+        $("#datepicker-ce").val(rrdDateTimeString(date));
+    }
+
+    initShowEvent();
+    initTimeShift();
+  });
+
+
+</script>
+
+</head>
+<body style="background-color: #ffffff;" onunload="g_refresh_timer=null">
+
+
+
+
+<div id="tabs">
+<ul>
+  <li><a href="#tabs-main">Main</a></li>
+  <li><a href="#tabs-search">Search</a></li>
+  <li><a href="#tabs-main">Views</a></li>
+  <li><a href="aggregate_graphs.php">Aggregate Graphs</a></li>
+  <li><a href="#tabs-main">Compare Hosts</a></li>
+  <li><a href="events.php">Events</a></li>
+
+  <li><a href="#tabs-autorotation" onclick="autoRotationChooser();">Automatic Rotation</a></li>
+  <li><a href="#tabs-livedashboard" onclick="liveDashboardChooser();">Live Dashboard</a></li>  
+  <li><a href="#tabs-mobile" onclick="window.location.href='mobile.php';">Mobile</a></li>
+</ul>
+
+<div id="tabs-main">
+<form action="./" method="GET" name="ganglia_form">
+  <div style="background-color:#dddddd;padding:5px;">
+     <big style="float:left;"><b id="page_title">MySQL pmtpa Cluster Report for Wed, 05 Jun 2013 17:18:36 +0000</b></big><input style="float:right;" class="header_btn" type="submit" value="Get Fresh Data"/><div style="clear:both"></div>
+  </div>
+  <div style="padding:5px 5px 0 5px;">
+    <div style="float:left;" id="range_menu" class="nobr">Last&nbsp;&nbsp;<input OnChange="ganglia_form.submit();" type="radio" id="range-hour" name="r" value="hour" /><label for="range-hour">hour</label><input OnChange="ganglia_form.submit();" type="radio" id="range-2hr" name="r" value="2hr" /><label for="range-2hr">2hr</label><input OnChange="ganglia_form.submit();" type="radio" id="range-4hr" name="r" value="4hr" /><label for="range-4hr">4hr</label><input OnChange="ganglia_form.submit();" type="radio" id="range-day" name="r" value="day" /><label for="range-day">day</label><input OnChange="ganglia_form.submit();" type="radio" id="range-week" name="r" value="week" /><label for="range-week">week</label><input OnChange="ganglia_form.submit();" type="radio" id="range-month" name="r" value="month" /><label for="range-month">month</label><input OnChange="ganglia_form.submit();" type="radio" id="range-year" name="r" value="year" checked="checked"/><label for="range-year">year</label><input OnChange="ganglia_form.submit();" type="radio" id="range-job" name="r" value="job" /><label for="range-job">job</label></div>
+    <div style="float:left;" id="custom_range_menu">or <span class="nobr">from <input type="TEXT" title="Feb 27 2007 00:00, 2/27/2007, 27.2.2007, now -1 week, -2 days, start + 1 hour, etc." NAME="cs" ID="datepicker-cs" SIZE="17"> to <input type="TEXT" title="Feb 27 2007 00:00, 2/27/2007, 27.2.2007, now -1 week, -2 days, start + 1 hour, etc." name="ce" ID="datepicker-ce" SIZE="17"> <input type="submit" value="Go">
+<input type="button" value="Clear" onclick="ganglia_submit(1)"></span>
+</div>
+    <div style="float:right;">&nbsp;&nbsp;<button class="header_btn" onclick="window.location='./?p=2&amp;c=MySQL%20pmtpa';return false;">Physical View</button></div>
+    <div style="clear:both;"></div>
+  </div>
+  <div id="sort_menu" style="padding:5px 5px 0 5px;">
+   Metric&nbsp;&nbsp; <select name="m" id="metrics-picker"><option value="apache_report">apache_report</option><option value="apache_response_report">apache_response_report</option><option value="boottime">boottime</option><option value="bytes_in">bytes_in</option><option value="bytes_out">bytes_out</option><option value="cpu_aidle">cpu_aidle</option><option value="cpu_idle">cpu_idle</option><option value="cpu_nice">cpu_nice</option><option value="cpu_num">cpu_num</option><option value="cpu_report">cpu_report</option><option value="cpu_speed">cpu_speed</option><option value="cpu_system">cpu_system</option><option value="cpu_user">cpu_user</option><option value="cpu_wio">cpu_wio</option><option value="disk_free">disk_free</option><option value="disk_total">disk_total</option><option value="gexec">gexec</option><option value="gmond_started">gmond_started</option><option value="ip_address">ip_address</option><option value="last_reported">last_reported</option><option value="last_reported_timestamp">last_reported_timestamp</option><option value="load_all_report">load_all_report</option><option value="load_fifteen">load_fifteen</option><option value="load_five">load_five</option><option value="load_one">load_one</option><option value="load_report">load_report</option><option value="location">location</option><option value="machine_type">machine_type</option><option value="mem_buffers">mem_buffers</option><option value="mem_cached">mem_cached</option><option value="mem_free">mem_free</option><option value="mem_report">mem_report</option><option value="mem_shared">mem_shared</option><option value="mem_total">mem_total</option><option value="mysql_aborted_clients">mysql_aborted_clients</option><option value="mysql_aborted_connects">mysql_aborted_connects</option><option value="mysql_binlog_cache_disk_use">mysql_binlog_cache_disk_use</option><option value="mysql_binlog_cache_use">mysql_binlog_cache_use</option><option value="mysql_bytes_received">mysql_bytes_received</option><option value="mysql_bytes_sent">mysql_bytes_sent</option><option value="mysql_com_delete">mysql_com_delete</option><option value="mysql_com_delete_multi">mysql_com_delete_multi</option><option value="mysql_com_insert">mysql_com_insert</option><option value="mysql_com_insert_select">mysql_com_insert_select</option><option value="mysql_com_load">mysql_com_load</option><option value="mysql_com_replace">mysql_com_replace</option><option value="mysql_com_replace_select">mysql_com_replace_select</option><option value="mysql_com_select">mysql_com_select</option><option value="mysql_com_update">mysql_com_update</option><option value="mysql_com_update_multi">mysql_com_update_multi</option><option value="mysql_connections">mysql_connections</option><option value="mysql_created_tmp_disk_tables">mysql_created_tmp_disk_tables</option><option value="mysql_created_tmp_files">mysql_created_tmp_files</option><option value="mysql_created_tmp_tables">mysql_created_tmp_tables</option><option value="mysql_innodb_active_transactions">mysql_innodb_active_transactions</option><option value="mysql_innodb_buffer_pool_pages_data">mysql_innodb_buffer_pool_pages_data</option><option value="mysql_innodb_buffer_pool_pages_dirty">mysql_innodb_buffer_pool_pages_dirty</option><option value="mysql_innodb_buffer_pool_pages_free">mysql_innodb_buffer_pool_pages_free</option><option value="mysql_innodb_buffer_pool_pages_total">mysql_innodb_buffer_pool_pages_total</option><option value="mysql_innodb_current_transactions">mysql_innodb_current_transactions</option><option value="mysql_innodb_data_fsyncs">mysql_innodb_data_fsyncs</option><option value="mysql_innodb_data_reads">mysql_innodb_data_reads</option><option value="mysql_innodb_data_writes">mysql_innodb_data_writes</option><option value="mysql_innodb_free_space">mysql_innodb_free_space</option><option value="mysql_innodb_history_list">mysql_innodb_history_list</option><option value="mysql_innodb_ibuf_inserts">mysql_innodb_ibuf_inserts</option><option value="mysql_innodb_ibuf_merged">mysql_innodb_ibuf_merged</option><option value="mysql_innodb_ibuf_merges">mysql_innodb_ibuf_merges</option><option value="mysql_innodb_log_bytes_flushed">mysql_innodb_log_bytes_flushed</option><option value="mysql_innodb_log_bytes_unflushed">mysql_innodb_log_bytes_unflushed</option><option value="mysql_innodb_log_bytes_written">mysql_innodb_log_bytes_written</option><option value="mysql_innodb_log_writes">mysql_innodb_log_writes</option><option value="mysql_innodb_os_waits">mysql_innodb_os_waits</option><option value="mysql_innodb_pages_created">mysql_innodb_pages_created</option><option value="mysql_innodb_pages_read">mysql_innodb_pages_read</option><option value="mysql_innodb_pages_written">mysql_innodb_pages_written</option><option value="mysql_innodb_pending_aio_log_ios">mysql_innodb_pending_aio_log_ios</option><option value="mysql_innodb_pending_aio_sync_ios">mysql_innodb_pending_aio_sync_ios</option><option value="mysql_innodb_pending_buffer_pool_flushes">mysql_innodb_pending_buffer_pool_flushes</option><option value="mysql_innodb_pending_chkp_writes">mysql_innodb_pending_chkp_writes</option><option value="mysql_innodb_pending_ibuf_aio_reads">mysql_innodb_pending_ibuf_aio_reads</option><option value="mysql_innodb_pending_log_flushes">mysql_innodb_pending_log_flushes</option><option value="mysql_innodb_pending_log_writes">mysql_innodb_pending_log_writes</option><option value="mysql_innodb_pending_normal_aio_reads">mysql_innodb_pending_normal_aio_reads</option><option value="mysql_innodb_pending_normal_aio_writes">mysql_innodb_pending_normal_aio_writes</option><option value="mysql_innodb_queries_inside">mysql_innodb_queries_inside</option><option value="mysql_innodb_queries_queued">mysql_innodb_queries_queued</option><option value="mysql_innodb_read_views">mysql_innodb_read_views</option><option value="mysql_innodb_rows_deleted">mysql_innodb_rows_deleted</option><option value="mysql_innodb_rows_inserted">mysql_innodb_rows_inserted</option><option value="mysql_innodb_rows_read">mysql_innodb_rows_read</option><option value="mysql_innodb_rows_updated">mysql_innodb_rows_updated</option><option value="mysql_innodb_spin_rounds">mysql_innodb_spin_rounds</option><option value="mysql_innodb_spin_waits">mysql_innodb_spin_waits</option><option value="mysql_innodb_transactions">mysql_innodb_transactions</option><option value="mysql_innodb_transactions_purged">mysql_innodb_transactions_purged</option><option value="mysql_innodb_transactions_unpurged">mysql_innodb_transactions_unpurged</option><option value="mysql_key_read_requests">mysql_key_read_requests</option><option value="mysql_key_reads">mysql_key_reads</option><option value="mysql_key_write_requests">mysql_key_write_requests</option><option value="mysql_key_writes">mysql_key_writes</option><option value="mysql_max_connections">mysql_max_connections</option><option value="mysql_max_used_connections">mysql_max_used_connections</option><option value="mysql_open_files">mysql_open_files</option><option value="mysql_open_tables">mysql_open_tables</option><option value="mysql_opened_tables">mysql_opened_tables</option><option value="mysql_queries">mysql_queries</option><option value="mysql_questions">mysql_questions</option><option value="mysql_select_full_join">mysql_select_full_join</option><option value="mysql_select_full_range_join">mysql_select_full_range_join</option><option value="mysql_select_range">mysql_select_range</option><option value="mysql_select_range_check">mysql_select_range_check</option><option value="mysql_select_scan">mysql_select_scan</option><option value="mysql_slave_io">mysql_slave_io</option><option value="mysql_slave_lag">mysql_slave_lag</option><option value="mysql_slave_open_temp_tables">mysql_slave_open_temp_tables</option><option value="mysql_slave_retried_transactions">mysql_slave_retried_transactions</option><option value="mysql_slave_running">mysql_slave_running</option><option value="mysql_slave_sql">mysql_slave_sql</option><option value="mysql_slow_launch_threads">mysql_slow_launch_threads</option><option value="mysql_slow_queries">mysql_slow_queries</option><option value="mysql_sort_range">mysql_sort_range</option><option value="mysql_sort_rows">mysql_sort_rows</option><option value="mysql_sort_scan">mysql_sort_scan</option><option value="mysql_table_locks_immediate">mysql_table_locks_immediate</option><option value="mysql_table_locks_waited">mysql_table_locks_waited</option><option value="mysql_threads_cached">mysql_threads_cached</option><option value="mysql_threads_connected">mysql_threads_connected</option><option value="mysql_threads_created">mysql_threads_created</option><option value="mysql_threads_running">mysql_threads_running</option><option value="mysql_uptime">mysql_uptime</option><option value="mysql_version">mysql_version</option><option value="network_report">network_report</option><option value="nfs_v3_client_report">nfs_v3_client_report</option><option value="os_name">os_name</option><option value="os_release">os_release</option><option value="packet_report">packet_report</option><option value="part_max_used">part_max_used</option><option value="pkts_in">pkts_in</option><option value="pkts_out">pkts_out</option><option value="proc_run">proc_run</option><option value="proc_total">proc_total</option><option value="sample_report">sample_report</option><option value="swap_free">swap_free</option><option value="swap_total">swap_total</option><option value="varnish_report">varnish_report</option></select>&nbsp;&nbsp;
+     Sorted&nbsp;&nbsp;<input OnChange="ganglia_submit();" type="radio" id="radio-ascending" name="s" value="ascending" /><label for="radio-ascending">ascending</label><input OnChange="ganglia_submit();" type="radio" id="radio-descending" name="s" value="descending" /><label for="radio-descending">descending</label><input OnChange="ganglia_submit();" type="radio" id="radio-by_name" name="s" value="by name" checked="checked"/><label for="radio-by_name">by name</label>
+  </div>
+  <div id="sort_menu" style="padding:5px 5px 0 5px;">
+    <b><a href="./?m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">Wikimedia Grid</a></b> <b>&gt;</b>
+<b><a href="./?c=MySQL%20pmtpa&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2">MySQL pmtpa</a></b> <b>&gt;</b>
+<input type="hidden" name="c" value="MySQL pmtpa">
+<select name="h" OnChange="ganglia_form.submit();"><option value="">--Choose a Node</option><option value="db9.pmtpa.wmnet">db9.pmtpa.wmnet
+<option value="db31.pmtpa.wmnet">db31.pmtpa.wmnet
+<option value="db32.pmtpa.wmnet">db32.pmtpa.wmnet
+<option value="db33.pmtpa.wmnet">db33.pmtpa.wmnet
+<option value="db34.pmtpa.wmnet">db34.pmtpa.wmnet
+<option value="db35.pmtpa.wmnet">db35.pmtpa.wmnet
+<option value="db36.pmtpa.wmnet">db36.pmtpa.wmnet
+<option value="db37.pmtpa.wmnet">db37.pmtpa.wmnet
+<option value="db38.pmtpa.wmnet">db38.pmtpa.wmnet
+<option value="db39.pmtpa.wmnet">db39.pmtpa.wmnet
+<option value="db43.pmtpa.wmnet">db43.pmtpa.wmnet
+<option value="db44.pmtpa.wmnet">db44.pmtpa.wmnet
+<option value="db45.pmtpa.wmnet">db45.pmtpa.wmnet
+<option value="db46.pmtpa.wmnet">db46.pmtpa.wmnet
+<option value="db47.pmtpa.wmnet">db47.pmtpa.wmnet
+<option value="db48.pmtpa.wmnet">db48.pmtpa.wmnet
+<option value="db49.pmtpa.wmnet">db49.pmtpa.wmnet
+<option value="db50.pmtpa.wmnet">db50.pmtpa.wmnet
+<option value="db51.pmtpa.wmnet">db51.pmtpa.wmnet
+<option value="db52.pmtpa.wmnet">db52.pmtpa.wmnet
+<option value="db53.pmtpa.wmnet">db53.pmtpa.wmnet
+<option value="db54.pmtpa.wmnet">db54.pmtpa.wmnet
+<option value="db55.pmtpa.wmnet">db55.pmtpa.wmnet
+<option value="db56.pmtpa.wmnet">db56.pmtpa.wmnet
+<option value="db57.pmtpa.wmnet">db57.pmtpa.wmnet
+<option value="db58.pmtpa.wmnet">db58.pmtpa.wmnet
+<option value="db59.pmtpa.wmnet">db59.pmtpa.wmnet
+<option value="db60.pmtpa.wmnet">db60.pmtpa.wmnet
+<option value="db63.pmtpa.wmnet">db63.pmtpa.wmnet
+<option value="db64.pmtpa.wmnet">db64.pmtpa.wmnet
+<option value="db65.pmtpa.wmnet">db65.pmtpa.wmnet
+<option value="db66.pmtpa.wmnet">db66.pmtpa.wmnet
+<option value="db67.pmtpa.wmnet">db67.pmtpa.wmnet
+<option value="db68.pmtpa.wmnet">db68.pmtpa.wmnet
+<option value="db69.pmtpa.wmnet">db69.pmtpa.wmnet
+<option value="db71.pmtpa.wmnet">db71.pmtpa.wmnet
+<option value="db72.pmtpa.wmnet">db72.pmtpa.wmnet
+<option value="db73.pmtpa.wmnet">db73.pmtpa.wmnet
+<option value="db74.pmtpa.wmnet">db74.pmtpa.wmnet
+<option value="es1.pmtpa.wmnet">es1.pmtpa.wmnet
+<option value="es2.pmtpa.wmnet">es2.pmtpa.wmnet
+<option value="es3.pmtpa.wmnet">es3.pmtpa.wmnet
+<option value="es4.pmtpa.wmnet">es4.pmtpa.wmnet
+<option value="es5.pmtpa.wmnet">es5.pmtpa.wmnet
+<option value="es6.pmtpa.wmnet">es6.pmtpa.wmnet
+<option value="es7.pmtpa.wmnet">es7.pmtpa.wmnet
+<option value="es8.pmtpa.wmnet">es8.pmtpa.wmnet
+<option value="es9.pmtpa.wmnet">es9.pmtpa.wmnet
+<option value="es10.pmtpa.wmnet">es10.pmtpa.wmnet
+<option value="pc1.pmtpa.wmnet">pc1.pmtpa.wmnet
+<option value="pc2.pmtpa.wmnet">pc2.pmtpa.wmnet
+<option value="pc3.pmtpa.wmnet">pc3.pmtpa.wmnet
+</select>
+&nbsp;&nbsp;Show only nodes matching <input name=host_regex ><input class="header_btn" type="SUBMIT" VALUE="Filter">&nbsp;<span class="nobr">Max graphs to show <select onChange="ganglia_submit();" name="max_graphs"><option value=0>all</option><option>1000</option><option>500</option><option>200</option><option>100</option><option>50</option><option>25</option><option>20</option><option>15</option><option>10</option></select></span>
+  </div>
+
+
+<input type="hidden" name="tab" id="selected_tab" value="m">
+<input type="hidden" id="vn" name="vn" value="">
+<input type="hidden" id="overlay_events" value="true">
+
+<hr size="1" noshade>
+<!-- End header.tpl -->
+<!-- Begin cluster_view.tpl -->
+<script type="text/javascript" src="js/protovis-r3.2.js"></script>
+
+<script type="text/javascript">
+function refreshClusterView() {
+  $.get('cluster_view.php?' + jQuery.param.querystring() + '&refresh', function(data) {
+    var item = data.split("<!-- || -->");
+
+    $('#cluster_title').html(item[1]);
+
+    $('#cluster_overview').html(item[2]);
+
+    if ($('#load_pie').size())
+      $('#load_pie').attr("src", item[3].replace(/&amp;/g, "&"));
+
+    if ($('#heatmap-fig').size()) {
+      eval("heatmap = [" + item[4] + "]")	;
+      vis.render();
+    }
+
+    if ($('#stacked_graph').size()) {
+      var localtimestamp = parseInt(item[0]);
+      var src = $('#stacked_graph').attr('src');
+      $('#stacked_graph').attr("src", jQuery.param.querystring(src, "&st=" + localtimestamp));
+    }
+
+    var host_metric_graphs = $('#host_metric_graphs');
+    host_metric_graphs.css('height', host_metric_graphs.height() + "px");
+    host_metric_graphs.html(item[5]);
+  });
+
+  $("#optional_graphs img").each(function (index) {
+    var src = $(this).attr("src");
+    if ((src.indexOf("graph.php") == 0) ||
+        (src.indexOf("./graph.php") == 0)) {
+      var d = new Date();
+      $(this).attr("src", jQuery.param.querystring(src, "&_=" + d.getTime()));
+    }    
+  });
+}
+
+$(function() {
+  // Modified from http://jqueryui.com/demos/toggle/
+  //run the currently selected effect
+  function runEffect(id){
+    //most effect types need no options passed by default
+    var options = { };
+
+    options = { to: { width: 200,height: 60 } }; 
+    
+    //run the effect
+    $("#"+id+"_div").toggle("blind",options,500);
+  };
+ 
+  //set effect from select menu value
+  $('.button').click(function(event) {
+    runEffect(event.target.id);
+    return false;
+  });
+
+    $(function() {
+        $( "#edit_optional_graphs" ).dialog({ autoOpen: false, minWidth: 550,
+          beforeClose: function(event, ui) {  location.reload(true); } })
+        $( "#edit_optional_graphs_button" ).button();
+        $( "#save_optional_graphs_button" ).button();
+        $( "#close_edit_optional_graphs_link" ).button();
+    });
+
+    $("#edit_optional_graphs_button").click(function(event) {
+      $("#edit_optional_graphs").dialog('open');
+      $('#edit_optional_graphs_content').html('<img src="img/spinner.gif">');
+      $.get('edit_optional_graphs.php', "clustername=MySQL pmtpa", function(data) {
+          $('#edit_optional_graphs_content').html(data);
+      })
+      return false;
+    });
+
+    $("#save_optional_graphs_button").click(function(event) {
+       $.get('edit_optional_graphs.php', $("#edit_optional_reports_form").serialize(), function(data) {
+          $('#edit_optional_graphs_content').html(data);
+          $("#save_optional_graphs_button").hide();
+          setTimeout(function() {
+             $('#edit_optional_graphs').dialog('close');
+          }, 5000);
+        });
+      return false;
+    });
+
+});
+</script>
+
+
+
+<style type="text/css">
+  .toggler { width: 500px; height: 200px; }
+  a.button { padding: .15em 1em; text-decoration: none; }
+  #effect { width: 240px; height: 135px; padding: 0.4em; position: relative; }
+  #effect h3 { margin: 0; padding: 0.4em; text-align: center; }
+  #heatmap-fig {
+    width: 200px;
+    height: 200px;
+  } 
+</style>
+
+<div id="metric-actions-dialog" title="Metric Actions">
+  <div id="metric-actions-dialog-content">
+    Available Metric actions.
+  </div>
+</div>
+
+<div id="edit_optional_graphs">
+  <div style="text-align:center">
+    <button  id='save_optional_graphs_button'>Save</button>
+  </div>
+  <div id="edit_optional_graphs_content">Empty</div>
+</div>
+
+<div style="background:rgb(238,238,238);text-align:center;">
+  <font size="+1" id="cluster_title">Overview of MySQL pmtpa @ 2013-06-05 17:18</font>
+</div>
+
+<table border="0" cellspacing=4 width="100%">
+<tr>
+<td align="left" valign="top">
+<div id="cluster_overview">
+<table cellspacing=1 cellpadding=1 width="100%" border=0>
+ <tr><td>CPUs Total:</td><td align=left><B>576</B></td></tr>
+ <tr><td width="60%">Hosts up:</td><td align=left><B>52</B></td></tr>
+ <tr><td>Hosts down:</td><td align=left><B>0</B></td></tr>
+ <tr><td>&nbsp;</td></tr>
+ <tr><td colspan=2><font class="nobr">Current Load Avg (15, 5, 1m):</font><br>&nbsp;&nbsp;<b>4%, 4%, 4%</b></td></tr>
+ <tr><td colspan=2>Avg Utilization (last year):<br>&nbsp;&nbsp;<b>11%</b></td></tr>
+ </table>
+
+</div>
+<!-- A place to put custom HTML for the cluster view. -->
+
+
+</td>
+<td rowspan=2 align="center" valign=top>
+<div id="optional_graphs" style="padding-bottom:4px">
+<A HREF="./graph_all_periods.php?c=MySQL%20pmtpa&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370452707&amp;g=load_report&amp;z=large">
+    <IMG BORDER=0 style="padding:2px;" class=cluster_zoomable title="MySQL%20pmtpa" SRC="./graph.php?c=MySQL%20pmtpa&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370452707&amp;g=load_report&amp;z=medium"></A>
+<A HREF="./graph_all_periods.php?c=MySQL%20pmtpa&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370452707&amp;g=mem_report&amp;z=large">
+    <IMG BORDER=0 style="padding:2px;" class=cluster_zoomable title="MySQL%20pmtpa" SRC="./graph.php?c=MySQL%20pmtpa&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370452707&amp;g=mem_report&amp;z=medium"></A>
+<A HREF="./graph_all_periods.php?c=MySQL%20pmtpa&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370452707&amp;g=cpu_report&amp;z=large">
+    <IMG BORDER=0 style="padding:2px;" class=cluster_zoomable title="MySQL%20pmtpa" SRC="./graph.php?c=MySQL%20pmtpa&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370452707&amp;g=cpu_report&amp;z=medium"></A>
+<A HREF="./graph_all_periods.php?c=MySQL%20pmtpa&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370452707&amp;g=network_report&amp;z=large">
+    <IMG BORDER=0 style="padding:2px;" class=cluster_zoomable title="MySQL%20pmtpa" SRC="./graph.php?c=MySQL%20pmtpa&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2&amp;st=1370452707&amp;g=network_report&amp;z=medium"></A>
+<br>
+
+</div>
+
+</td>
+</tr>
+
+<tr>
+ <td align="center" valign="top">
+
+Utilization heatmap<br />
+<div id="heatmap-fig">
+<script type="text/javascript+protovis">
+var heatmap = [
+[0.071666666666667,0.04875,0.009375,0.04,0.02625,0.021875,0.01625,0.03],[0.0091666666666667,0.045,0,0.31125,0.0125,0.0125,0.0525,0.0079166666666667],[0.05875,0.074166666666667,0,0.02,0.0075,0.02,0.05875,0],[0.225,0.009375,0.14125,0.00875,0,0.08625,0,0.01],[0.18583333333333,0,0.015,0.045,0.15875,0.0175,0.01,0.085],[0.02125,0,0.015,0.07875,0.005,0.0475,0.01875,0],[0.0525,0.00875,0.015,0.38]
+];
+
+var w = heatmap[0].length,
+    h = heatmap.length;
+
+var vis = new pv.Panel()
+    .width(w * 25)
+    .height(h * 25)
+    .margin(2)
+    .strokeStyle("#aaa")
+    .lineWidth(4)
+    .antialias(false);
+
+vis.add(pv.Image)
+    .imageWidth(w)
+    .imageHeight(h)
+    .image(pv.Scale.linear()
+        .domain(0, 0.25, 0.5, 0.75, 1.00)
+        .range("#e2ecff", "#caff98", "#ffde5e" , "#ffa15e","#ff634f")
+        .by(function(i, j) heatmap[j][i]));
+
+vis.render();
+    </script>
+ </div>
+
+ </td>
+</tr>
+</table>
+
+<center>
+<table width="100%" border=0>
+<tr>
+  <td colspan="1">
+  <font size="+1" style="text-align:center">Stacked Graph - cpu_nice </font> 
+  </td>
+</tr>
+<tr>
+  <td>
+  <center><img id="stacked_graph" src="stacked.php?m=cpu_nice&amp;c=MySQL%20pmtpa&amp;r=year&amp;st=1370452707&amp;host_regex=" alt="MySQL pmtpa cpu_nice "></center>
+  </td>
+</tr>
+</table>
+</center>
+
+
+<script type="text/javascript">
+// Need to set the field value to metric name
+$("#metrics-picker").val("cpu_nice");
+</script>
+
+
+<div id="cluster_view_chooser">
+<table border="0" width="100%">
+  <tr>
+  <td style="text-align:center;background:rgb(238,238,238);">
+  Show Hosts Scaled:
+    <input type="radio" name="sh" value="2" id="shch2" OnClick="ganglia_form.submit();" ><label for="shch2">Auto</label>
+    <input type="radio" name="sh" value="1" id="shch1" OnClick="ganglia_form.submit();" checked><label for="shch1">Same</label>
+    <input type="radio" name="sh" value="0" id="shch0" OnClick="ganglia_form.submit();" ><label for="shch0">None</label>
+  &nbsp;
+  |
+  <span class="nobr">MySQL pmtpa <strong>cpu_nice </strong>
+  last <strong>year</strong>
+  sorted <strong>by name</strong></span>
+  |
+   <font>
+   <span class="nobr">Size&nbsp;&nbsp;<SELECT NAME="z" OnChange="ganglia_form.submit();"><OPTION VALUE="small" SELECTED>small</OPTION>
+<OPTION VALUE="medium">medium</OPTION>
+<OPTION VALUE="large">large</OPTION>
+<OPTION VALUE="xlarge">xlarge</OPTION>
+<OPTION VALUE="xxlarge">xxlarge</OPTION>
+<OPTION VALUE="mobile">mobile</OPTION>
+</SELECT>
+</span>
+   <span class="nobr">Columns&nbsp;&nbsp;<SELECT NAME="hc" OnChange="ganglia_form.submit();">
+<OPTION VALUE=0 >0
+<OPTION VALUE=1 >1
+<OPTION VALUE=2 >2
+<OPTION VALUE=3 >3
+<OPTION VALUE=4 SELECTED>4
+<OPTION VALUE=5 >5
+<OPTION VALUE=6 >6
+<OPTION VALUE=7 >7
+<OPTION VALUE=8 >8
+<OPTION VALUE=9 >9
+<OPTION VALUE=10 >10
+<OPTION VALUE=11 >11
+<OPTION VALUE=12 >12
+<OPTION VALUE=13 >13
+<OPTION VALUE=14 >14
+<OPTION VALUE=15 >15
+<OPTION VALUE=16 >16
+<OPTION VALUE=17 >17
+<OPTION VALUE=18 >18
+<OPTION VALUE=19 >19
+<OPTION VALUE=20 >20
+<OPTION VALUE=21 >21
+<OPTION VALUE=22 >22
+<OPTION VALUE=23 >23
+<OPTION VALUE=24 >24
+<OPTION VALUE=25 >25
+</SELECT>
+ (0 = metric + reports)</span>
+   </font>
+
+  </td>
+</tr>
+</table>
+</div>
+
+<div id="host_metric_graphs">
+<center>
+<table id=graph_sorted_list>
+<tr>
+<td><div><font style='font-size: 8px'>db9.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db9.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db9.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db9.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db31.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db31.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db31.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db31.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db32.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db32.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db32.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db32.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db33.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db33.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db33.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db33.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td></tr><tr>
+<td><div><font style='font-size: 8px'>db34.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db34.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db34.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db34.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db35.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db35.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db35.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db35.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db36.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db36.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db36.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db36.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db37.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db37.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db37.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db37.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td></tr><tr>
+<td><div><font style='font-size: 8px'>db38.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db38.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db38.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db38.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db39.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db39.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db39.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db39.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db43.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db43.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db43.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db43.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db44.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db44.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db44.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db44.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td></tr><tr>
+<td><div><font style='font-size: 8px'>db45.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db45.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db45.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db45.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db46.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db46.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db46.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db46.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db47.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db47.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db47.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db47.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db48.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db48.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db48.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db48.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td></tr><tr>
+<td><div><font style='font-size: 8px'>db49.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db49.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db49.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db49.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db50.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db50.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db50.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db50.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db51.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db51.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db51.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db51.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db52.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db52.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db52.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db52.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td></tr><tr>
+<td><div><font style='font-size: 8px'>db53.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db53.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db53.pmtpa.wmnet&amp;l=caff98&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db53.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db54.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db54.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db54.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db54.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db55.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db55.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db55.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db55.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db56.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db56.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db56.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db56.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td></tr><tr>
+<td><div><font style='font-size: 8px'>db57.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db57.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db57.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db57.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db58.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db58.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db58.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db58.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db59.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db59.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db59.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db59.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db60.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db60.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db60.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db60.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td></tr><tr>
+<td><div><font style='font-size: 8px'>db63.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db63.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db63.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db63.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db64.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db64.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db64.pmtpa.wmnet&amp;l=caff98&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db64.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db65.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db65.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db65.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db65.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db66.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db66.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db66.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db66.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td></tr><tr>
+<td><div><font style='font-size: 8px'>db67.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db67.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db67.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db67.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db68.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db68.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db68.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db68.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db69.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db69.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db69.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db69.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db71.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db71.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db71.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db71.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td></tr><tr>
+<td><div><font style='font-size: 8px'>db72.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db72.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db72.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db72.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db73.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db73.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db73.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db73.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>db74.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=db74.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=db74.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="db74.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>es1.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=es1.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=es1.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="es1.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td></tr><tr>
+<td><div><font style='font-size: 8px'>es2.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=es2.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=es2.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="es2.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>es3.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=es3.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=es3.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="es3.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>es4.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=es4.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=es4.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="es4.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>es5.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=es5.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=es5.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="es5.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td></tr><tr>
+<td><div><font style='font-size: 8px'>es6.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=es6.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=es6.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="es6.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>es7.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=es7.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=es7.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="es7.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>es8.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=es8.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=es8.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="es8.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>es9.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=es9.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=es9.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="es9.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td></tr><tr>
+<td><div><font style='font-size: 8px'>es10.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=es10.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=es10.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="es10.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>pc1.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=pc1.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=pc1.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="pc1.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>pc2.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=pc2.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=pc2.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="pc2.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td>
+<td><div><font style='font-size: 8px'>pc3.pmtpa.wmnet</font><br><a href="?c=MySQL%20pmtpa&amp;h=pc3.pmtpa.wmnet&amp;m=cpu_nice&amp;r=year&amp;s=by%20name&amp;hc=4&amp;mc=2"><img class=host_small_zoomable src="./graph.php?m=cpu_nice&amp;z=small&amp;c=MySQL%20pmtpa&amp;h=pc3.pmtpa.wmnet&amp;l=e2ecff&amp;v=0.0&amp;r=year&amp;su=1&amp;st=1370452707" title="pc3.pmtpa.wmnet" border=0 style="padding:2px;"></a></div></td></tr><tr>
+
+</tr>
+</table>
+
+
+
+
+
+<p>
+(Nodes colored by 1-minute load) | <a href="./node_legend.html">Legend</A>
+</p>
+
+</center>
+
+</div>
+
+<script type="text/javascript">
+$(function() {
+  $( "#cluster_view_chooser" ).buttonset();
+});
+</script>
+<!-- End cluster_view.tpl -->
+<!-- Begin footer.tpl -->
+</form> <!-- ganglia-form -->
+</div> <!-- tabs-main -->
+
+<div id="tabs-search">
+  Search term matches any number of metrics and hosts. For example type web or disk; wait a split second, and a drop down menu will show up with choices.
+  <!-- Uses LiveSearch from http://andreaslagerkvist.com/jquery/live-search/ -->
+  <div id="metric-search">
+    <form method="post" action="/search/">
+      <p>
+	<label>
+	    <small>Search as you type</small><br />
+	    <input type="text" name="q" id="search-field-q" size="60" placeholder="Search as you type" on />
+	</label>
+      </p>
+    </form>
+  </div>
+</div> 
+
+<div id="create-new-view-dialog" title="Create new view">
+  <div id="create-new-view-layer">
+    <form id="create_view_form">
+      <input type="hidden" name="create_view" value="1">
+      <fieldset>
+	 <label for="name">View Name</label>
+	 <input type="text" name="view_name" id="view_name" class="text ui-widget-content ui-corner-all" />
+         <center><button onclick="createView(); return false;">Create</button></center>
+      </fieldset>
+    </form>
+  </div>
+  <div id="create-new-view-confirmation-layer"></div>
+</div>
+
+<div id="tabs-mobile"></div>
+
+<div id="tabs-autorotation">
+Invoke automatic rotation system. Automatic rotation rotates all of the graphs/metrics specified in a view waiting 
+30 seconds in between each. This will run as long as you have this page open.
+<p>
+Please select the view you want to rotate.</p>
+  <div id="tabs-autorotation-chooser">
+Loading view, please wait...<img src="img/spinner.gif" />
+  </div>
+</div>
+
+<div id="tabs-livedashboard">
+Live dashboard provides you with an overview of all view metrics in a compact format. Data updates every 15 seconds.
+Only those elements that contain a metric or graph report are supported. Aggregate graphs will not be included.
+<p>
+You can get more graphs per page by using your browser zoom functionality.
+<p>
+Please select the view you want to view</p>
+  <div id="tabs-livedashboard-chooser">
+Loading view, please wait...<img src="img/spinner.gif" />
+  </div>
+</div>
+
+
+<hr />
+<div align="center">
+<font size="-1" class="footer">
+Ganglia Web Frontend version 3.5.7
+<a href="http://ganglia.sourceforge.net/downloads.php?component=ganglia-webfrontend&amp;version=3.5.7">Check for Updates.</a><br />
+
+Ganglia Web Backend <i>(gmetad)</i> version 3.3.5
+<a href="http://ganglia.sourceforge.net/downloads.php?component=gmetad&amp;version=3.3.5">Check for Updates.</a><br />
+
+Downloading and parsing ganglia's XML tree took 0.2081s.<br />
+Images created with <a href="http://www.rrdtool.org/">RRDtool</a> version 1.3.8.<br />
+<a href="http://dwoo.org/">Powered by Dwoo</a> 1.1.1.<br />
+</font>
+</div>
+</div> <!-- div-tabs -->
+</BODY>
+<!-- End footer.tpl -->
+</HTML>
+
