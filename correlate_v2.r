@@ -205,17 +205,26 @@ allFiles = dlply(correlations_top, .(commithash), function(corrs) {
   }, .progress="text")
   
   #find related diff hashes
-  compiled_diffs = alply(unique(subset(configdiffs, commithash==commit_hash)$diffhash), 1, 
-        function(diffhash) {
+  iarr = unique(subset(configdiffs, commithash==commit_hash)$diffhash)
+  compiled_diffs = alply(iarr, 1, function(diffhash) {
     configdiffmap[[diffhash]]
-  })
+  }, .dims=TRUE)
+  names(compiled_diffs) = iarr
+  
+  #nodes for the given diff hashes
+  iarr = unique(subset(configdiffs, commithash==commit_hash)$diffhash)
+  compiled_diff_nodes = alply(iarr, 1, function(dh) {
+    subset(configdiffs, diffhash==dh & commithash==commit_hash)$node
+  }, .dims=TRUE)
+  names(compiled_diff_nodes) = iarr
   
   mmod = list(
     files = comsrc$diff$files,
     subject = comsrc$subject,
     plots = plots_written$filepath,
     hash = commit_hash,
-    compiled = compiled_diffs
+    compiled = compiled_diffs,
+    compiled_nodes = compiled_diff_nodes
   )
   
   fc = file(file.path(changepath, "info.json"))

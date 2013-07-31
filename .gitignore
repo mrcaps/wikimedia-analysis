@@ -1,17 +1,23 @@
+#input data
 operations-puppet
-libgit2
-.Rhistory
-.RData
-output*
 timeseries
-*.pyc
 
+#outputs
 times.csv
 diff-collected.csv
 diff-collected.json
 all-changes.json
 filtered-mysql.json
+output*
 
+#compiled/saved
+.Rhistory
+.RData
+*.pyc
+
+#local
 run-differ.sh
 
+#dumped changemap
 figs/changemap
+figs/index.json
