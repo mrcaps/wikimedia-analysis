@@ -551,13 +551,12 @@ def real_run():
 	d = Differ()
 	#compute changes over these nodes
 	nodelist = list(d.get_nodes())
-	
+	nodelist = [("db1046", "eqiad")]	
 	try:
 		import generate_assignments
 		nodelist = generate_assignments.get_my_nodes()
 	except:
 		log.error("Couldn't get local node list; reverting to manual")
-	nodelist = [("db1046", "eqiad")]
 	log.info("my nodes are %s" % (str(nodelist)))
 
 	#run compile
