@@ -407,7 +407,7 @@ class Differ(object):
 
 		with open(outfile, "w") as outfp:
 			writer = csv.writer(outfp)
-			writer.writerow(["node", "timestamp", "commithash", "diffhash"])
+			writer.writerow(["node", "timestamp", "commithash", "diffhash", "loc"])
 
 			"""Collect all diffs into a single output file."""
 			for node in nodes:
@@ -426,7 +426,8 @@ class Differ(object):
 							hasher.update(contents)
 							writer.writerow([
 								self.__node_to_string(node), 
-								ts, commithash, hasher.hexdigest()])
+								ts, commithash, hasher.hexdigest(),
+								os.path.join(basepath, fn)])
 
 	def apply_unparseable(self, nodes, op="remove"):
 		"""Remove unparseable configs in the directory for the specified nodes
