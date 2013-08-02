@@ -3,6 +3,7 @@ libgit2
 .Rhistory
 output*
 *.pyc
+data
 
 times.csv
 diff-collected.csv
