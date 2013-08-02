@@ -17,7 +17,7 @@ theme_update(plot.margin = unit(c(0,0,0,0), "cm"))
 
 source("common.r")
 
-datafiles = getdatafiles(c("data/MySQL%20eqiad", "data/MySQL%20pmtpa"), "*.csv")
+datafiles = getdatafiles(c("timeseries/MySQL%20eqiad", "timeseries/MySQL%20pmtpa"), "*.csv")
 
 #convert ts to a day number
 dateno = function(ts) {
@@ -32,7 +32,10 @@ if (!exists("indata")) {
   indata = llply(indata, function(l) {
     l$cps = cpprobs(l$data)
     l
-  }, .progress="text", .parallel=TRUE)
+  }, .progress="text", .parallel=TRUE, .paropts=list(
+    .export=c("cpprobs"),
+    .packages=c("bcp")
+  ))
   
   indata_minday = laply(head(indata, 1e6), function(l) {
     min(dateno(l$data$t))
@@ -59,7 +62,7 @@ if (!exists("configdiffs")) {
 
 #the source changes
 if (!exists("changesource")) {
-  fcont = paste(readLines("C:/Docs/wikimedia/all-changes.json"), collapse=" ")
+  fcont = paste(readLines("all-changes.json"), collapse=" ")
   changesource = fromJSON(fcont)
   names(changesource) = laply(changesource, function(c) {c$hash})
 }
@@ -112,10 +115,6 @@ if (!exists("correlations")) {
     
     #get test statistic across all metrics at this commit
     stats = ldply(indata, function(l) {
-      dateno = function(ts) {
-        as.numeric(as.Date(ts))
-      }
-      
       data.frame(
         commithash=commit_hash,
         commitday=commit_day,
@@ -125,7 +124,7 @@ if (!exists("correlations")) {
         stat=sum(l$cps$v[abs(dateno(l$cps$t) - commit_day) < 2]),
         ischanged=(l$node %in% diffs$node)
       )
-    }, .parallel=TRUE)
+    }, .progress="text")
     
     result = cor.test(stats$stat, as.numeric(stats$ischanged), method="pearson")
     
@@ -134,7 +133,10 @@ if (!exists("correlations")) {
     stats$estimate = result$estimate
     
     stats
-  }, .progress="text")
+  }, .parallel=TRUE, .paropts=list(
+    .export=c("dateno", "ddply", "ldply", "indata"),
+    .packages=c("plyr")
+  ))
 
   #use estimate for sorting: this is the actual correlation
   topcors = arrange(
@@ -157,13 +159,13 @@ sample = arrange(
 
 outdir = file.path("figs", "changemap")
 
-allFiles = dlply(correlations_top, .(estimate), function(corrs) {
-  strength = floor(unique(corrs$estimate)*10000)
-  changepath = file.path(outdir, strength)
-  dir.create(changepath, showWarnings=FALSE, recursive=TRUE)
-    
+allFiles = dlply(correlations_top, .(commithash), function(corrs) {
   commit_hash = as.character(unique(corrs$commithash))
-  stopifnot(length(commit_hash) == 1)
+  strength = floor(unique(corrs$estimate)*10000)
+  stopifnot(length(strength) == 1)
+  
+  changepath = file.path(outdir, paste(strength, commit_hash, sep="-"))
+  dir.create(changepath, showWarnings=FALSE, recursive=TRUE)
   
   comsrc = changesource[[commit_hash]]
   cat("Writing plots for", comsrc$hash, "strength=", strength, "\n")
@@ -203,17 +205,26 @@ allFiles = dlply(correlations_top, .(estimate), function(corrs) {
   }, .progress="text")
   
   #find related diff hashes
-  compiled_diffs = alply(unique(subset(configdiffs, commithash==commit_hash)$diffhash), 1, 
-        function(diffhash) {
+  iarr = unique(subset(configdiffs, commithash==commit_hash)$diffhash)
+  compiled_diffs = alply(iarr, 1, function(diffhash) {
     configdiffmap[[diffhash]]
-  })
+  }, .dims=TRUE)
+  names(compiled_diffs) = iarr
+  
+  #nodes for the given diff hashes
+  iarr = unique(subset(configdiffs, commithash==commit_hash)$diffhash)
+  compiled_diff_nodes = alply(iarr, 1, function(dh) {
+    subset(configdiffs, diffhash==dh & commithash==commit_hash)$node
+  }, .dims=TRUE)
+  names(compiled_diff_nodes) = iarr
   
   mmod = list(
     files = comsrc$diff$files,
     subject = comsrc$subject,
     plots = plots_written$filepath,
     hash = commit_hash,
-    compiled = compiled_diffs
+    compiled = compiled_diffs,
+    compiled_nodes = compiled_diff_nodes
   )
   
   fc = file(file.path(changepath, "info.json"))

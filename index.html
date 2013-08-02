@@ -20,6 +20,10 @@
 .changesubject {
 	font-weight: bold;
 }
+
+.on-nodes {
+	font-size: 80%;
+}
 </style>
 </head>
 <body>
@@ -51,7 +55,7 @@ $(document).ready(function() {
 		var indexlist = [];
 		$.each(indexJson, function(i, el) {
 			var osimsum = el.split("/");
-			osimsum = parseInt(osimsum[osimsum.length-1]);
+			osimsum = parseInt(osimsum[osimsum.length-1].split("-")[0]);
 			var toload = $("<div>").text(osimsum);
 			toload.order = osimsum;
 			indexlist.push(toload);
@@ -70,8 +74,18 @@ $(document).ready(function() {
 
 					$("#changedata").append($("<div>").css("font-style", "italic").html("Compiled to:"));
 
-					$.each(json.compiled, function(i, el) {
-						$("#changedata").append($("<pre>").html(el))
+					$.each(json.compiled, function(diffhash, contents) {
+						var inner = $("<div>");
+						inner.append($("<pre>").html(contents));
+						var nodes = json.compiled_nodes[diffhash];
+						if (typeof(nodes) === "string") {
+							nodes = [nodes];
+						}
+						var nodescont = nodes.join(", ");
+						inner.append($("<div>").addClass("on-nodes").html(
+							"on " + nodes.length + " nodes: " + nodescont
+						));
+						$("#changedata").append(inner);
 					});
 					
 					var plotsort = [];
