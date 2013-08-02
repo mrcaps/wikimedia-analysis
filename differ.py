@@ -515,7 +515,8 @@ def canonicalize(js):
 			res["tags"] = newtags
 		if ("type" in res and 
 			res["type"] != "Notify" and
-			res["title"] != "/etc/salt/minion"):
+			res["title"] != "/etc/salt/minion" and
+			res["title"] != "Salt::Minion"):
 			key = res["title"]
 			if "type" in res:
 				key += "--" + res["type"]
