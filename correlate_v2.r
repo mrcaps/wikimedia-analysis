@@ -9,7 +9,7 @@ library(rjson)
 
 library(foreach)
 library(doParallel)
-workers = makeCluster(detectCores(), "PSOCK", useXDR=FALSE)
+workers = makeCluster(detectCores() - 1, "PSOCK", useXDR=FALSE)
 registerDoParallel(workers)
 
 setwd(dirname(sys.frame(1)$ofile))
@@ -26,9 +26,13 @@ dateno = function(ts) {
 
 if (!exists("indata")) {
   cat("Reading input time series...\n")
+  tstart = proc.time()
   indata = readdata(datafiles)
+  cat("time:\n")
+  print(proc.time() - tstart)
   
   cat("Computing changepoint test statistics...\n")
+  tstart = proc.time()
   indata = llply(indata, function(l) {
     l$cps = cpprobs(l$data)
     l
@@ -36,6 +40,7 @@ if (!exists("indata")) {
     .export=c("cpprobs"),
     .packages=c("bcp")
   ))
+  print(proc.time() - tstart)
   
   indata_minday = laply(head(indata, 1e6), function(l) {
     min(dateno(l$data$t))
@@ -103,6 +108,8 @@ nodes = unique(configdiffs$node)
 ndiffs = 0
 if (!exists("correlations")) {
   cat("compute correlation")
+  tstart = proc.time()
+  
   correlations = ddply(configdiffs, .(commithash), function(diffs) {
     #use Pearson's product moment correlation coefficient r (cor.test)
     # previous thought: use something like Jaccard similarity
@@ -150,6 +157,9 @@ if (!exists("correlations")) {
   n_top_correlations = 10
   correlations_top = subset(correlations, 
                             commithash %in% head(topcors, n_top_correlations)$commithash)
+  
+  cat("correlation time:\n")
+  print(proc.time() - tstart)
 }
 
 sample = arrange(
