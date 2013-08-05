@@ -1,6 +1,9 @@
-"""Scrape a set of Ganglia pages for underlying raw data."""
-import bs4
-from bs4 import BeautifulSoup
+"""
+Scrape things:
+ * a set of Ganglia pages for underlying raw data.
+ * a set of bugs for parsing out gerrit links
+"""
+
 import urllib
 import urllib2
 import sys
@@ -8,6 +11,14 @@ import unittest
 import os
 import time
 import random
+
+#require: easy_install beautifulsoup4
+import bs4
+from bs4 import BeautifulSoup
+#require: easy_install xmltodict
+import xmltodict
+
+import json
 
 import logging as log
 log.basicConfig(level=log.INFO)
@@ -179,7 +190,60 @@ def run_downloader():
 	down.run("http://ganglia.wikimedia.org/latest/", "data")
 	log.info("done download")
 
+class BugScraper():
+	def __init__(self):
+		pass
+
+	def run(self, bugzilla_loc, last_bug=52535, outfile="bugs.json"):
+		"""Grab list of bugs from bugzilla, dump to outfile.
+
+		Args:
+			bugzilla_loc: location of bugzilla main, including trailing forwardslash
+			last_bug: last bug id
+		"""
+		bugs = dict()
+		for bug in range(1, last_bug):
+			log.info("Grab bug %s" % bug)
+
+			dlpage = "%sshow_bug.cgi?ctype=xml&id=%s" % (bugzilla_loc, bug)
+			d = xmltodict.parse(getpage(dlpage).read())
+			bugs[bug] = d["bugzilla"]["bug"]
+
+			time.sleep(random.random() * 0.1)
+
+		with open(outfile, "w") as fp:
+			json.dump(bugs, fp)
+
+	def correlate_changeids(self, infile="bugs.json"):
+		"""For each bug in bugs, determine if it has a gerrit change.
+		For those that do, find the gerrit change and get the associated commit.
+		"""
+
+		bugs = None
+		with open(infile, "r") as fp:
+			bugs = json.load(fp)
+
+		def get_gerrit_change(cid):
+			detail = getpage("https://gerrit.wikimedia.org/r/changes/%d/detail" % cid)
+			#)]}' at the beginning of the change
+			CRUFT_LENGTH = 4
+			return json.loads(detail[4:])
+
+		for (bugid, bug) in bugs:
+			print bugid
+			#Gerrit detail json like:
+			#	https://gerrit.wikimedia.org/r/changes/67311/detail
+			#where 67311 is the change id.
+
+def run_bugscraper():
+	scrape = BugScraper()
+	log.info("start bug scrape")
+	scrape.run("https://bugzilla.wikimedia.org/")
+	log.info("done bug scrape")
+
 if __name__ == "__main__":
 	#unittest.main()
 
-	run_downloader()
+	#run_downloader()
+
+	run_bugscraper()
