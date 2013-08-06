@@ -13,6 +13,7 @@ all-changes.json
 filtered-mysql.json
 bugs.json
 bugs
+bugs-commits.csv
 output*
 
 #compiled/saved

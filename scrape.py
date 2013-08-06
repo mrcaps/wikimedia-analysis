@@ -12,6 +12,7 @@ import os
 import time
 import random
 import re
+import csv
 
 #require: easy_install beautifulsoup4
 import bs4
@@ -24,7 +25,7 @@ import json
 import logging as log
 log.basicConfig(level=log.INFO)
 
-def getpage(loc):
+def getpage(loc, data=None, header_override=None):
 	#data = urllib.urlencode({"k": "v"})
 	headers = {
 		"User-Agent": "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1468.0 Safari/537.36",
@@ -34,8 +35,10 @@ def getpage(loc):
 		"Accept-Language": "en-US,en;q=0.8",
 		"Cache-Control": "max-age=0",
 		"Connection": "keep-alive"}
-	req = urllib2.Request(loc, None, headers)
-
+	if header_override is not None:
+		for (k, v) in header_override.items():
+			headers[k] = v
+	req = urllib2.Request(loc, data, headers)
 	try:
 		return urllib2.urlopen(req)
 	except urllib2.URLError, e:
@@ -204,21 +207,19 @@ class BugScraper():
 	def __init__(self):
 		pass
 
-	def run(self, bugzilla_loc, first_bug=1, last_bug=52535, outfile="bugs.json"):
+	def run(self, bugzilla_loc, first_bug=1, last_bug=52535, outdir="bugs", outfile="bugs.json"):
 		"""Grab list of bugs from bugzilla, dump to outfile.
 
 		Args:
 			bugzilla_loc: location of bugzilla main, including trailing forwardslash
 			last_bug: last bug id
 		"""
-		tmpdir = "bugs"
 		try:
-			os.makedirs(tmpdir)
+			os.makedirs(outdir)
 		except:
 			pass
-
 		def get_bug_path(bid):
-			return os.path.join(tmpdir, "%s.json" % (bid))
+			return os.path.join(outdir, "%s.json" % (bid))
 
 		for bug in range(first_bug, last_bug):
 			log.info("Grab bug %d" % bug)
@@ -246,28 +247,60 @@ class BugScraper():
 			json.dump(bugs, fp, indent=4)
 
 
-	def correlate_changeids(self, infile="bugs.json"):
+	def correlate_changeids(self, outdir="bugs/changeids", infile="bugs.json", outfile="bugs-commits.csv"):
 		"""For each bug in bugs, determine if it has a gerrit change.
 		For those that do, find the gerrit change and get the associated commit.
+		Dump those commits to bugs/changeids
 		"""
 
 		bugs = None
 		with open(infile, "r") as fp:
 			bugs = json.load(fp)
 
+		try:
+			os.makedirs(outdir)
+		except:
+			pass
+		def get_out_path(bid):
+			return os.path.join(outdir, "%s.json" % (bid))
+
 		gerrit_url = "https://gerrit.wikimedia.org/"
 		pat = re.compile(gerrit_url + "r/#/c/(\\d+)/")
 
-		def get_gerrit_change(cid):
+		def get_gerrit_change_detail(cid):
 			url = "%sr/changes/%d/detail" % (gerrit_url, cid)
-			print "URL:", url
 			detail = getpage(url).read()
 			#)]}' at the beginning of the change
 			CRUFT_LENGTH = 4
 			return json.loads(detail[4:])
 
+		def get_gerrit_change_detail_service(cid):
+			"""Get UI change detail for the given change id
+			This isn't really guaranteed to keep working, but gives revision hashes.
+			(in .result.patchSets[n].revision.id)
+			"""
+			url = "%sr/gerrit_ui/rpc/ChangeDetailService" % (gerrit_url)
+			data = {
+				"id": 1,
+				"jsonrpc": "2.0",
+				"method": "changeDetail",
+				"params": [{
+					"id": cid
+				}]
+			}
+			data_encoded = json.dumps(data)
+			headers = {
+				"Accept": "application/json,application/json,application/jsonrequest",
+				"Content-Type": "application/json; charset=UTF-8",
+				"Content-Length": len(data_encoded)
+			}
+			detail = getpage(url, data_encoded, headers).read()
+			jsr = json.loads(detail)
+			return jsr["result"]
+
+		collectable = []
+
 		for (bugid, bug) in bugs.items():
-			print "BUG", bugid
 			if "long_desc" in bug:
 				if isinstance(bug["long_desc"], dict):
 					bug["long_desc"] = [bug["long_desc"]]
@@ -275,13 +308,31 @@ class BugScraper():
 					matches = pat.finditer(desc["thetext"])
 					for match in matches:
 						changeno = int(match.group(1))
-						print "changeno", changeno
-
 						#Gerrit detail json like:
 						#	https://gerrit.wikimedia.org/r/changes/67311/detail
 						#where 67311 is the change id.
-						cont = get_gerrit_change(changeno)
-						print cont
+						try:
+							outpath = get_out_path(bugid)
+							if not os.path.exists(outpath):
+								log.info("Collect change id %s" % bugid)
+								cont = get_gerrit_change_detail_service(changeno)
+								with open(outpath, "w") as fp:
+									json.dump(cont, fp)
+							collectable.append((bugid, outpath))
+						except:
+							log.error("Couldn't collect change id %s" % bugid)
+
+		#collect change ids
+		with open(outfile, "wb") as fp:
+			writer = csv.writer(fp)
+			writer.writerow(["bug", "revhash"])
+
+			for (bugid, idpath) in collectable:
+				with open(idpath, "r") as fp:
+					js = json.load(fp)
+					for ps in js["patchSets"]:
+						writer.writerow([bugid, ps["revision"]["id"].strip()])
+
 
 def run_bugscraper():
 	scrape = BugScraper()
