@@ -12,6 +12,7 @@ diff-collected.json
 all-changes.json
 filtered-mysql.json
 bugs.json
+bugs
 output*
 
 #compiled/saved
