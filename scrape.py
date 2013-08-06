@@ -11,6 +11,7 @@ import unittest
 import os
 import time
 import random
+import re
 
 #require: easy_install beautifulsoup4
 import bs4
@@ -25,12 +26,21 @@ log.basicConfig(level=log.INFO)
 
 def getpage(loc):
 	#data = urllib.urlencode({"k": "v"})
-	data = urllib.urlencode({})
-	headers = { "User-Agent": "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1468.0 Safari/537.36" }
-	req = urllib2.Request(loc, data, headers)
+	headers = {
+		"User-Agent": "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1468.0 Safari/537.36",
+		"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+		"Accept-Charset": "ISO-8859-1,utf-8;q=0.7,*;q=0.3",
+		"Accept-Encoding": "none",
+		"Accept-Language": "en-US,en;q=0.8",
+		"Cache-Control": "max-age=0",
+		"Connection": "keep-alive"}
+	req = urllib2.Request(loc, None, headers)
+
 	try:
 		return urllib2.urlopen(req)
-	except urllib2.URLError:
+	except urllib2.URLError, e:
+		log.error("Couldn't open URL %s" % loc)
+		log.error(e)
 		return None
 
 def readpage(loc):
@@ -194,7 +204,7 @@ class BugScraper():
 	def __init__(self):
 		pass
 
-	def run(self, bugzilla_loc, last_bug=52535, outfile="bugs.json"):
+	def run(self, bugzilla_loc, first_bug=1, last_bug=52535, outfile="bugs.json"):
 		"""Grab list of bugs from bugzilla, dump to outfile.
 
 		Args:
@@ -210,7 +220,7 @@ class BugScraper():
 		def get_bug_path(bid):
 			return os.path.join(tmpdir, "%s.json" % (bid))
 
-		for bug in range(1, last_bug):
+		for bug in range(first_bug, last_bug):
 			log.info("Grab bug %d" % bug)
 
 			bout = get_bug_path(bug)
@@ -222,19 +232,18 @@ class BugScraper():
 				with open(bout, "w") as fp:
 					json.dump(dct, fp)
 
-			time.sleep(random.random() * 0.1)
+				time.sleep(random.random() * 0.1)
 
-		for bug in range(1, last_bug):
+		bugs = dict()
+		for bug in range(first_bug, last_bug):
 			log.info("Collect bug %d" % bug)
-
-			bugs = dict()
 			bout = get_bug_path(bug)
 			with open(bout, "r") as fp:
 				bjs = json.load(fp)
-			bugs[bug] = bjs
+			bugs[bug] = bjs["bugzilla"]["bug"]
 
 		with open(outfile, "w") as fp:
-			json.dump(bugs, fp)
+			json.dump(bugs, fp, indent=4)
 
 
 	def correlate_changeids(self, infile="bugs.json"):
@@ -246,23 +255,43 @@ class BugScraper():
 		with open(infile, "r") as fp:
 			bugs = json.load(fp)
 
+		gerrit_url = "https://gerrit.wikimedia.org/"
+		pat = re.compile(gerrit_url + "r/#/c/(\\d+)/")
+
 		def get_gerrit_change(cid):
-			detail = getpage("https://gerrit.wikimedia.org/r/changes/%d/detail" % cid)
+			url = "%sr/changes/%d/detail" % (gerrit_url, cid)
+			print "URL:", url
+			detail = getpage(url).read()
 			#)]}' at the beginning of the change
 			CRUFT_LENGTH = 4
 			return json.loads(detail[4:])
 
-		for (bugid, bug) in bugs:
-			print bugid
-			#Gerrit detail json like:
-			#	https://gerrit.wikimedia.org/r/changes/67311/detail
-			#where 67311 is the change id.
+		for (bugid, bug) in bugs.items():
+			print "BUG", bugid
+			if "long_desc" in bug:
+				if isinstance(bug["long_desc"], dict):
+					bug["long_desc"] = [bug["long_desc"]]
+				for desc in bug["long_desc"]:
+					matches = pat.finditer(desc["thetext"])
+					for match in matches:
+						changeno = int(match.group(1))
+						print "changeno", changeno
+
+						#Gerrit detail json like:
+						#	https://gerrit.wikimedia.org/r/changes/67311/detail
+						#where 67311 is the change id.
+						cont = get_gerrit_change(changeno)
+						print cont
 
 def run_bugscraper():
 	scrape = BugScraper()
 	log.info("start bug scrape")
-	scrape.run("https://bugzilla.wikimedia.org/")
+	scrape.run("https://bugzilla.wikimedia.org/", first_bug=50370, last_bug=50380)
 	log.info("done bug scrape")
+
+	log.info("start correlate change ids")
+	scrape.correlate_changeids()
+	log.info("done correlate change ids")
 
 if __name__ == "__main__":
 	#unittest.main()
