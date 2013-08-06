@@ -225,12 +225,15 @@ class BugScraper():
 
 			bout = get_bug_path(bug)
 			if not os.path.exists(bout):
-				dlpage = "%sshow_bug.cgi?ctype=xml&id=%s" % (bugzilla_loc, bug)
-				dct = xmltodict.parse(getpage(dlpage).read())
-				#write out to separate dir
+				try:
+					dlpage = "%sshow_bug.cgi?ctype=xml&id=%s" % (bugzilla_loc, bug)
+					dct = xmltodict.parse(getpage(dlpage).read())
+					#write out to separate dir
 
-				with open(bout, "w") as fp:
-					json.dump(dct, fp)
+					with open(bout, "w") as fp:
+						json.dump(dct, fp)
+				except:
+					log.error("Couldn't download bug %d" % bug)
 
 				time.sleep(random.random() * 0.1)
 
@@ -286,7 +289,7 @@ class BugScraper():
 def run_bugscraper():
 	scrape = BugScraper()
 	log.info("start bug scrape")
-	scrape.run("https://bugzilla.wikimedia.org/", first_bug=50370, last_bug=50380)
+	scrape.run("https://bugzilla.wikimedia.org/")
 	log.info("done bug scrape")
 
 	log.info("start correlate change ids")
