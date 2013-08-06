@@ -201,18 +201,41 @@ class BugScraper():
 			bugzilla_loc: location of bugzilla main, including trailing forwardslash
 			last_bug: last bug id
 		"""
-		bugs = dict()
-		for bug in range(1, last_bug):
-			log.info("Grab bug %s" % bug)
+		tmpdir = "bugs"
+		try:
+			os.makedirs(tmpdir)
+		except:
+			pass
 
-			dlpage = "%sshow_bug.cgi?ctype=xml&id=%s" % (bugzilla_loc, bug)
-			d = xmltodict.parse(getpage(dlpage).read())
-			bugs[bug] = d["bugzilla"]["bug"]
+		def get_bug_path(bid):
+			return os.path.join(tmpdir, "%s.json" % (bid))
+
+		for bug in range(1, last_bug):
+			log.info("Grab bug %d" % bug)
+
+			bout = get_bug_path(bug)
+			if not os.path.exists(bout):
+				dlpage = "%sshow_bug.cgi?ctype=xml&id=%s" % (bugzilla_loc, bug)
+				dct = xmltodict.parse(getpage(dlpage).read())
+				#write out to separate dir
+
+				with open(bout, "w") as fp:
+					json.dump(dct, fp)
 
 			time.sleep(random.random() * 0.1)
 
+		for bug in range(1, last_bug):
+			log.info("Collect bug %d" % bug)
+
+			bugs = dict()
+			bout = get_bug_path(bug)
+			with open(bout, "r") as fp:
+				bjs = json.load(fp)
+			bugs[bug] = bjs
+
 		with open(outfile, "w") as fp:
 			json.dump(bugs, fp)
+
 
 	def correlate_changeids(self, infile="bugs.json"):
 		"""For each bug in bugs, determine if it has a gerrit change.
@@ -238,7 +261,7 @@ class BugScraper():
 def run_bugscraper():
 	scrape = BugScraper()
 	log.info("start bug scrape")
-	scrape.run("https://bugzilla.wikimedia.org/")
+	scrape.run("https://bugzilla.wikimedia.org/", last_bug = 3)
 	log.info("done bug scrape")
 
 if __name__ == "__main__":
