@@ -137,7 +137,7 @@ if (!exists("correlations")) {
     
     stats$statistic = result$statistic
     stats$p.value = result$p.value
-    stats$estimate = result$estimate
+    stats$estimate = result$estimate / sum(as.numeric(stats$ischanged))
     
     stats
   }, .parallel=TRUE, .paropts=list(
@@ -154,7 +154,7 @@ if (!exists("correlations")) {
       )
     }), -estimate)
   
-  n_top_correlations = 10
+  n_top_correlations = 30
   correlations_top = subset(correlations, 
                             commithash %in% head(topcors, n_top_correlations)$commithash)
   
@@ -171,7 +171,7 @@ outdir = file.path("figs", "changemap")
 
 allFiles = dlply(correlations_top, .(commithash), function(corrs) {
   commit_hash = as.character(unique(corrs$commithash))
-  strength = floor(unique(corrs$estimate)*10000)
+  strength = floor(unique(corrs$estimate)*1000000)
   stopifnot(length(strength) == 1)
   
   changepath = file.path(outdir, paste(strength, commit_hash, sep="-"))
@@ -182,7 +182,7 @@ allFiles = dlply(correlations_top, .(commithash), function(corrs) {
   stopifnot(comsrc$hash == commit_hash)
   
   #write the top n metrics
-  n_plot_metrics = 10
+  n_plot_metrics = 20
   corrs_toplot = head(
     arrange(subset(corrs, ischanged==TRUE), -stat),
     n_plot_metrics)
