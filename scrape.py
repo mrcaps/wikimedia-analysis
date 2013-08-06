@@ -261,7 +261,7 @@ class BugScraper():
 def run_bugscraper():
 	scrape = BugScraper()
 	log.info("start bug scrape")
-	scrape.run("https://bugzilla.wikimedia.org/", last_bug = 3)
+	scrape.run("https://bugzilla.wikimedia.org/")
 	log.info("done bug scrape")
 
 if __name__ == "__main__":
