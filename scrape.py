@@ -5,7 +5,11 @@ Scrape things:
 """
 
 import urllib
-import urllib2
+try:
+	from urllib2 import request, urlopen, URLError
+except:
+	from urllib.request import Request, urlopen
+	from urllib.error import URLError
 import sys
 import unittest
 import os
@@ -13,6 +17,7 @@ import time
 import random
 import re
 import csv
+import traceback
 
 #require: easy_install beautifulsoup4
 import bs4
@@ -38,10 +43,10 @@ def getpage(loc, data=None, header_override=None):
 	if header_override is not None:
 		for (k, v) in header_override.items():
 			headers[k] = v
-	req = urllib2.Request(loc, data, headers)
+	req = Request(loc, data, headers)
 	try:
-		return urllib2.urlopen(req)
-	except urllib2.URLError, e:
+		return urlopen(req)
+	except (URLError, e):
 		log.error("Couldn't open URL %s" % loc)
 		log.error(e)
 		return None
@@ -230,11 +235,11 @@ class BugScraper():
 					dlpage = "%sshow_bug.cgi?ctype=xml&id=%s" % (bugzilla_loc, bug)
 					dct = xmltodict.parse(getpage(dlpage).read())
 					#write out to separate dir
-
 					with open(bout, "w") as fp:
 						json.dump(dct, fp)
 				except:
 					log.error("Couldn't download bug %d" % bug)
+					traceback.print_exc()
 
 				time.sleep(random.random() * 0.1)
 
@@ -291,15 +296,18 @@ class BugScraper():
 					"id": cid
 				}]
 			}
-			data_encoded = json.dumps(data)
+			data_encoded = bytes(json.dumps(data), "utf-8")
 			headers = {
 				"Accept": "application/json,application/json,application/jsonrequest",
 				"Content-Type": "application/json; charset=UTF-8",
 				"Content-Length": len(data_encoded)
 			}
 			detail = getpage(url, data_encoded, headers).read()
-			jsr = json.loads(detail)
-			return jsr["result"]
+			jsr = json.loads(detail.decode())
+			if "result" in jsr:
+				return jsr["result"]
+			else:
+				return None
 
 		collectable = []
 
@@ -308,25 +316,29 @@ class BugScraper():
 				if isinstance(bug["long_desc"], dict):
 					bug["long_desc"] = [bug["long_desc"]]
 				for desc in bug["long_desc"]:
-					matches = pat.finditer(desc["thetext"])
-					for match in matches:
-						changeno = int(match.group(1))
-						#Gerrit detail json like:
-						#	https://gerrit.wikimedia.org/r/changes/67311/detail
-						#where 67311 is the change id.
-						try:
-							outpath = get_out_path(bugid)
-							if not os.path.exists(outpath):
-								log.info("Collect change id %s" % bugid)
-								cont = get_gerrit_change_detail_service(changeno)
-								with open(outpath, "w") as fp:
-									json.dump(cont, fp)
-							collectable.append((bugid, outpath))
-						except:
-							log.error("Couldn't collect change id %s" % bugid)
+					if "thetext" in desc and desc["thetext"] is not None:
+						matches = pat.finditer(desc["thetext"])
+						for match in matches:
+							changeno = int(match.group(1))
+							#Gerrit detail json like:
+							#	https://gerrit.wikimedia.org/r/changes/67311/detail
+							#where 67311 is the change id.
+							try:
+								outpath = get_out_path(bugid)
+								if not os.path.exists(outpath):
+									log.info("Collect change id %s" % bugid)
+									cont = get_gerrit_change_detail_service(changeno)
+									if cont is None:
+										continue
+									with open(outpath, "w") as fp:
+										json.dump(cont, fp)
+								collectable.append((bugid, outpath))
+							except:
+								log.error("Couldn't collect change id %s" % bugid)
+								traceback.print_exc()
 
 		#collect change ids
-		with open(outfile, "wb") as fp:
+		with open(outfile, "wt") as fp:
 			writer = csv.writer(fp)
 			writer.writerow(["bug", "revhash"])
 
@@ -340,7 +352,7 @@ class BugScraper():
 def run_bugscraper():
 	scrape = BugScraper()
 	log.info("start bug scrape")
-	scrape.run("https://bugzilla.wikimedia.org/")
+	#scrape.run("https://bugzilla.wikimedia.org/")
 	log.info("done bug scrape")
 
 	log.info("start correlate change ids")
