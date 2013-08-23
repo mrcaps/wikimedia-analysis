@@ -15,6 +15,12 @@ registerDoParallel(workers)
 setwd(dirname(sys.frame(1)$ofile))
 theme_update(plot.margin = unit(c(0,0,0,0), "cm"))
 
+indata[[1]]$data$v
+
+cpday = 15700
+ggplot(indata[[1]]$data, aes(x=dateno(t), y=v)) + geom_line() + geom_vline(xintercept=15700)
+indata[[1]]$data$v
+
 source("common.r")
 
 datafiles = getdatafiles(c("timeseries/MySQL%20eqiad", "timeseries/MySQL%20pmtpa"), "*.csv")
@@ -124,22 +130,54 @@ if (!exists("correlations")) {
     
     #get test statistic across all metrics at this commit
     stats = ldply(indata, function(l) {
+      margin = 2
+      
+      dtt = dateno(l$data$t)
+      ts_before = (dtt < commit_day) & (dtt > commit_day-margin)
+      mean_before = mean(l$data$v[ts_before])
+      ts_after = (dtt > commit_day) & (dtt < commit_day+margin)
+      mean_after = mean(l$data$v[ts_after])
+      
+      #print(sum(ts_before))
+      #print(sum(ts_after))
+      
+      if ((sum(ts_before) == 0) || (sum(ts_after) == 0)) {
+        chgstat = 0  
+      } else {
+        chgstat = abs(mean_after-mean_before)
+      }
+      
+      #if (chgstat != 0) {
+      #  cat("before:", mean_before, "\n")
+      #  cat("after:", mean_after, "\n")
+      #  cat("chgstat:", chgstat, "\n")
+      #}
+      
       data.frame(
         commithash=commit_hash,
         commitday=commit_day,
         committime=commit_t,
         node=l$node,
         metric=l$metric,
-        stat=sum(l$cps$v[abs(dateno(l$cps$t) - commit_day) < 2]),
+        stat=chgstat,
         ischanged=(l$node %in% diffs$node)
       )
     }, .progress="text")
     
-    result = cor.test(stats$stat, as.numeric(stats$ischanged), method="pearson")
+    result = cor.test(
+        as.numeric(stats$stat),
+        as.numeric(stats$ischanged),
+        method="pearson")
     
-    stats$statistic = result$statistic
-    stats$p.value = result$p.value
-    stats$estimate = result$estimate / sum(as.numeric(stats$ischanged))
+    if (sum(as.numeric(stats$stat)) == 0) {
+      stats$statistic = 0
+      stats$p.value = 0
+      stats$estimate = 0
+    } else {
+      stats$statistic = result$statistic
+      stats$p.value = result$p.value
+      stats$estimate = result$estimate / sum(as.numeric(stats$ischanged))  
+    }
     
     stats
   }, .parallel=TRUE, .paropts=list(
