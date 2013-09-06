@@ -6,7 +6,7 @@ Scrape things:
 
 import urllib
 try:
-	from urllib2 import request, urlopen, URLError
+	from urllib2 import Request, urlopen, URLError
 except:
 	from urllib.request import Request, urlopen
 	from urllib.error import URLError
@@ -362,6 +362,14 @@ def run_bugscraper():
 if __name__ == "__main__":
 	#unittest.main()
 
-	#run_downloader()
+	if len(sys.argv) <= 1:
+		print("Usage: scrape.py [action] where [action] one of:")
+		print(" download: download time series data")
+		print(" bugscrape: scrape bugs")
+		sys.exit(1)
 
-	run_bugscraper()
+	cmd = sys.argv[1]
+	if cmd == "download":
+		run_downloader()
+	elif cmd == "bugscrape":
+		run_bugscraper()
